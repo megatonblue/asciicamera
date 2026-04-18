@@ -72,9 +72,14 @@
     const useColor = colorInput.checked;
     const chars = getCharset();
 
-    const cellW = vw / cols;
+    /** 映像の中央を 1:1（正方形）にクロップ */
+    const side = Math.min(vw, vh);
+    const sx = (vw - side) / 2;
+    const sy = (vh - side) / 2;
+
+    const cellW = side / cols;
     const cellH = cellW * CHAR_ASPECT;
-    const rows = Math.max(1, Math.floor(vh / cellH));
+    const rows = Math.max(1, Math.floor(side / cellH));
 
     canvas.width = cols;
     canvas.height = rows;
@@ -84,7 +89,7 @@
       ctx.translate(canvas.width, 0);
       ctx.scale(-1, 1);
     }
-    ctx.drawImage(video, 0, 0, cols, rows);
+    ctx.drawImage(video, sx, sy, side, side, 0, 0, cols, rows);
     ctx.restore();
 
     const img = ctx.getImageData(0, 0, cols, rows);
@@ -145,8 +150,9 @@
       stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: "user",
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
+          aspectRatio: { ideal: 1 },
+          width: { ideal: 1080 },
+          height: { ideal: 1080 },
         },
         audio: false,
       });
