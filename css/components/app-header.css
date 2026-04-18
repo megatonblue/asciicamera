@@ -1,0 +1,85 @@
+/**
+ * AppHeader — トップバー
+ */
+.app-header {
+  height: var(--header-h);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0.75rem 0 0.5rem;
+  background: linear-gradient(180deg, #070b12 0%, rgba(5, 7, 10, 0.96) 100%);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.app-header__left {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.app-header__menu {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+
+.app-header__menu:hover,
+.app-header__menu:focus-visible {
+  background: rgba(1, 22, 255, 0.12);
+  outline: none;
+  box-shadow: 0 0 0 2px var(--brand-soft);
+}
+
+.app-header__menu svg {
+  display: block;
+}
+
+.app-header__title {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.app-header__icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.app-header__icon-btn:hover,
+.app-header__icon-btn:focus-visible {
+  background: rgba(1, 22, 255, 0.12);
+  color: var(--text);
+  outline: none;
+}

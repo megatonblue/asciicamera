@@ -1,0 +1,85 @@
+/**
+ * MobileDrawer — ハンバーガーで開くオーバーレイ（MATRIX ナビ）
+ */
+.drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-drawer);
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, visibility 0.2s;
+}
+
+.drawer-backdrop--open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.drawer-panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: min(300px, 88vw);
+  z-index: calc(var(--z-drawer) + 1);
+  background: linear-gradient(180deg, #0a101c 0%, #05070a 100%);
+  border-right: 1px solid var(--border-strong);
+  box-shadow: 12px 0 40px rgba(0, 0, 0, 0.5);
+  transform: translateX(-100%);
+  transition: transform 0.22s ease;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0.75rem 0.75rem 1rem;
+}
+
+.drawer-panel .matrix-sidebar__nav {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.drawer-backdrop--open .drawer-panel {
+  transform: translateX(0);
+}
+
+.drawer-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.drawer-panel__title {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--text-muted);
+}
+
+.drawer-panel__close {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.drawer-panel__close:hover {
+  background: rgba(1, 22, 255, 0.12);
+}
+
+.drawer-panel__export {
+  margin-top: auto;
+}
+
+@media (min-width: 900px) {
+  .drawer-backdrop {
+    display: none;
+  }
+}
