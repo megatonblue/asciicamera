@@ -2,84 +2,173 @@
 <html lang="ja">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ASCII Camera</title>
-    <link rel="stylesheet" href="style.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#0116ff" />
+    <title>DIGITAL ALCHEMIST</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100..800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/main.css" />
   </head>
   <body>
-    <div class="app">
-      <header class="header">
-        <h1>ASCII Camera</h1>
-        <p class="tagline">Webカメラの映像をリアルタイムでASCIIアートに変換します</p>
-      </header>
+    <div class="app-shell">
 
-      <main class="main">
-        <div class="preview-panel">
-          <div class="ascii-wrap">
-            <pre id="ascii" class="ascii" aria-live="polite"></pre>
+      <div class="app-shell__body">
+        <aside class="matrix-sidebar" aria-label="Settings panel">
+
+          <div class="matrix-sidebar__panels" id="sidebarPanels">
+            <section class="side-panel side-panel--active" role="tabpanel" id="panel-controls" aria-labelledby="tab-controls">
+              <div class="side-panel__section" style="display: flex; justify-content: center; gap: 0.75rem; padding-bottom: 1rem;">
+                <button type="button" class="btn-playback" id="btnStop" title="停止">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12"></rect></svg>
+                </button>
+                <button type="button" class="btn-playback btn-playback--play" id="btnPlay" title="再生">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                </button>
+                <button type="button" class="btn-playback" id="btnPause" title="一時停止">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+                </button>
+              </div>
+              <div class="side-panel__section" id="section-density">
+                <div class="side-panel__row">
+                  <span class="side-panel__label">DENSITY</span>
+                  <span class="side-panel__value" id="densityPct">50%</span>
+                </div>
+                <input type="range" class="control-slider" id="cols" min="40" max="140" value="80" step="5" />
+
+                <div class="side-panel__row" style="margin-top: 1rem">
+                  <span class="side-panel__label">FONT_WEIGHT</span>
+                  <span class="side-panel__value" id="fontWeightValue">400</span>
+                </div>
+                <input type="range" class="control-slider" id="fontWeight" min="100" max="800" value="400" step="100" />
+              </div>
+
+              <div class="side-panel__section" id="section-contrast">
+                <div class="side-panel__row">
+                  <span class="side-panel__label">SENSITIVITY</span>
+                  <span class="side-panel__value" id="contrastValue">[1.20]</span>
+                </div>
+                <input type="range" class="control-slider" id="contrast" min="0.5" max="2.5" value="1.2" step="0.05" />
+              </div>
+
+              <div class="side-panel__section" id="section-charset">
+                <div class="side-panel__row">
+                  <span class="side-panel__label">CHAR_SET</span>
+                </div>
+                <select class="control-select" id="charset">
+                  <option value="detailed">DETAILED</option>
+                  <option value="simple">SIMPLE</option>
+                  <option value="blocks">BLOCKS</option>
+                  <option value="minimal">MINIMAL</option>
+                </select>
+                <div class="side-panel__row" style="margin-top: 0.65rem">
+                  <span class="side-panel__label">CUSTOM_CHAR_INPUT</span>
+                </div>
+                <input
+                  type="text"
+                  class="control-input"
+                  id="customCharset"
+                  placeholder="@%#*+=-:. "
+                  spellcheck="false"
+                  autocomplete="off"
+                />
+              </div>
+
+              <div class="side-panel__section" id="section-invert">
+
+                <div class="toggle-row">
+                  <span class="side-panel__label">MIRROR</span>
+                  <label class="toggle">
+                    <input type="checkbox" id="mirror" checked />
+                    <span class="toggle__track"><span class="toggle__thumb"></span></span>
+                  </label>
+                </div>
+                <div class="toggle-row">
+                  <span class="side-panel__label">INVERT</span>
+                  <label class="toggle">
+                    <input type="checkbox" id="invert" />
+                    <span class="toggle__track"><span class="toggle__thumb"></span></span>
+                  </label>
+                </div>
+                <div class="toggle-row">
+                  <span class="side-panel__label">COLOR_SAMPLE</span>
+                  <label class="toggle">
+                    <input type="checkbox" id="color" />
+                    <span class="toggle__track"><span class="toggle__thumb"></span></span>
+                  </label>
+                </div>
+
+                <div class="matrix-sidebar__export" style="margin-top: 2rem;">
+                  <button type="button" class="btn-export" id="btnExportJpg">JPG EXPORT</button>
+                  <button type="button" class="btn-export btn-export--secondary" id="btnExportTxt" style="margin-top: 0.65rem">TXT EXPORT</button>
+                  <button type="button" class="btn-export btn-export--secondary" id="btnExportMov" style="margin-top: 0.65rem">MOV EXPORT (5S)</button>
+                </div>
+              </div>
+            </section>
           </div>
-          <p id="status" class="status">カメラを開始してください</p>
-        </div>
-
-        <aside class="controls">
-          <button type="button" id="btnToggle" class="btn btn-primary">
-            カメラを開始
-          </button>
-
-          <label class="field">
-            <span class="label">文字密度（列数）</span>
-            <input
-              type="range"
-              id="cols"
-              min="40"
-              max="140"
-              value="80"
-              step="5"
-            />
-            <span class="value" id="colsValue">80</span>
-          </label>
-
-          <label class="field">
-            <span class="label">コントラスト</span>
-            <input type="range" id="contrast" min="0.5" max="2.5" value="1.2" step="0.05" />
-            <span class="value" id="contrastValue">1.2</span>
-          </label>
-
-          <label class="check">
-            <input type="checkbox" id="mirror" checked />
-            <span>左右反転（鏡）</span>
-          </label>
-
-          <label class="check">
-            <input type="checkbox" id="invert" />
-            <span>輝度を反転</span>
-          </label>
-
-          <label class="check">
-            <input type="checkbox" id="color" />
-            <span>カラー（平均色）</span>
-          </label>
-
-          <label class="field">
-            <span class="label">文字セット</span>
-            <select id="charset">
-              <option value="detailed">標準（細かい段階）</option>
-              <option value="simple">シンプル</option>
-              <option value="blocks">ブロック</option>
-              <option value="minimal">ミニマル</option>
-            </select>
-          </label>
         </aside>
-      </main>
 
-      <footer class="footer">
-        <small
-          >HTTPSまたはlocalhostで開くとカメラが利用できます。ブラウザの許可ダイアログでカメラへのアクセスを許可してください。</small
-        >
-      </footer>
+        <div class="app-shell__main">
+          <div class="main-workspace">
+            <section class="view-stage" aria-label="ASCII preview">
+              <div class="ascii-viewport">
+                <div class="ascii-viewport__inner">
+                  <pre id="ascii" class="ascii-output" aria-live="polite"></pre>
+                </div>
+              </div>
+              <p id="status" class="view-stage__status">カメラを開始してください</p>
+              <p class="view-stage__copyright" style="margin: 0; font-family: var(--font-mono); font-size: 0.55rem; color: rgba(255, 255, 255, 0.4); text-align: center; letter-spacing: 0.05em;">&copy; Atsushi Imaoka</p>
+
+            </section>
+
+            <!-- controls moved into left sidebar tabs -->
+          </div>
+        </div>
+      </div>
+
+      <button type="button" class="fab-camera" id="fabCamera" title="カメラ">
+        <span class="sr-only">カメラ</span>
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+          <circle cx="12" cy="13" r="4"/>
+        </svg>
+      </button>
+
+      <nav class="bottom-nav" aria-label="モバイルナビ">
+        <button type="button" class="bottom-nav__btn bottom-nav__btn--active" id="navCamera" data-action="camera">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          CAM
+        </button>
+        <button type="button" class="bottom-nav__btn" id="navSettings" data-action="settings">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9h2V7H3v2h4zm14 4h-4v2h4v-2zm-6-4h2V7h-4v2h2z"/></svg>
+          TUNE
+        </button>
+        <button type="button" class="bottom-nav__btn" id="navHistory" data-action="history">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          LOG
+        </button>
+        <button type="button" class="bottom-nav__btn" id="navProfile" data-action="profile">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+          USER
+        </button>
+      </nav>
     </div>
 
-    <!-- 非表示: 映像取得とピクセル読み取り用 -->
+    <div class="drawer-backdrop" id="drawerBackdrop" aria-hidden="true">
+      <div class="drawer-panel" role="dialog" aria-modal="true" aria-label="Menu" tabindex="-1">
+        <div class="drawer-panel__head">
+          <p class="drawer-panel__title">MATRIX_LABS</p>
+          <button type="button" class="drawer-panel__close" id="btnCloseDrawer" aria-label="閉じる">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div id="drawerContent" aria-label="Sidebar content (mobile)"></div>
+      </div>
+    </div>
+
     <video id="video" playsinline muted autoplay></video>
     <canvas id="capture"></canvas>
 
