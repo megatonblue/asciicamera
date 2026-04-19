@@ -221,17 +221,10 @@
 }
 
 @media (max-width: 899px) {
-  .view-stage {
-    padding-bottom: 11rem;
-  }
-
+  /* mobile-ui.css で上書きするため最小限のみ */
   .recording-hud {
     top: 14px;
     right: 14px;
-  }
-
-  .ascii-viewport {
-    margin: 1rem;
   }
 
   .btn-playback {
