@@ -40,14 +40,8 @@
   const btnStop = document.getElementById("btnStop");
   const btnPlay = document.getElementById("btnPlay");
   const btnPause = document.getElementById("btnPause");
-  const fabCamera = document.getElementById("fabCamera");
-  const btnCloseDrawer = document.getElementById("btnCloseDrawer");
   const drawerBackdrop = document.getElementById("drawerBackdrop");
   const drawerContent = document.getElementById("drawerContent");
-  const navCamera = document.getElementById("navCamera");
-  const navSettings = document.getElementById("navSettings");
-  const navHistory = document.getElementById("navHistory");
-  const navProfile = document.getElementById("navProfile");
   const sidebarPanels = document.getElementById("sidebarPanels");
 
   let stream = null;
@@ -71,6 +65,7 @@
     color: colorInput.checked,
     charset: charsetSelect.value,
     customCharset: customCharsetInput.value,
+    useCustomCharset: false,  // Manual Input が有効かどうか
     realtime: true,
   };
 
@@ -136,6 +131,13 @@
     clearCopyFeedback();
   }
 
+  function setRecButtonStyle(color, borderColor) {
+    qsa("#btnExportMov").forEach((el) => {
+      el.style.color = color;
+      el.style.borderColor = borderColor;
+    });
+  }
+
   function updateRecordingHud(phase, label = "") {
     recordingPhase = phase;
     if (!recordingHud || !recordingHudLabel) return;
@@ -155,6 +157,10 @@
       recordingDurationTimer = 0;
     }
   }
+
+  // IDのエイリアスマップ: デスクトップID → モバイルID
+  // ※ HTMLでデスクトップとモバイルが同一IDを共有するため、
+  //   qsa("#id") が両方を自動的に返す。MOBILE_ID_MAP は不要になった。
 
   function setPressedState(id, isPressed) {
     qsa(`#${id}`).forEach((el) => {
@@ -197,18 +203,16 @@
   }
 
   function updateCharsetButtons(value) {
-    const hasCustomCharset = Boolean((state.customCharset || "").trim());
     getCharsetButtons().forEach((button) => {
-      const isActive = !hasCustomCharset && button.dataset.charset === value;
+      const isActive = !state.useCustomCharset && button.dataset.charset === value;
       button.classList.toggle("charset-button--active", isActive);
       button.setAttribute("aria-pressed", String(isActive));
     });
   }
 
   function updateManualInputState() {
-    const isActive = Boolean((state.customCharset || "").trim());
     qsa("#customCharset").forEach((el) => {
-      el.classList.toggle("control-input--active", isActive);
+      el.classList.toggle("control-input--active", state.useCustomCharset);
     });
   }
 
@@ -236,7 +240,8 @@
 
   function getChars() {
     const custom = (state.customCharset || "").trim();
-    if (custom.length >= 2) return custom;
+    // customCharset が有効かつ activeCharset が "custom" の場合のみ使用
+    if (custom.length >= 2 && state.useCustomCharset) return custom;
     return CHARSETS[state.charset] || CHARSETS.detailed;
   }
 
@@ -342,7 +347,12 @@
 
     if (isRecordingMov && recordingCtx && recordCanvas) {
       const fsize = Math.round((14 * 80) / cols);
-      const lineH = fsize * 1.2;
+      // CHAR_ASPECT に合わせた行高さ（表示と同じアスペクト比）
+      const charW = recordingCtx.measureText ? (() => {
+        recordingCtx.font = `${state.fontWeight} ${fsize}px "JetBrains Mono", monospace`;
+        return recordingCtx.measureText("M").width;
+      })() : fsize * 0.6;
+      const lineH = charW * CHAR_ASPECT;
       const pad = Math.max(20, fsize);
       
       const text = asciiEl.textContent || asciiEl.innerText || "";
@@ -397,7 +407,6 @@
       running = true;
       state.realtime = true;
       
-      fabCamera.classList.add("fab-camera--on");
       updatePlaybackButtons("play");
       setStatus("LIVE_//_ASCII_STREAM");
       cancelAnimationFrame(rafId);
@@ -423,7 +432,6 @@
     asciiEl.textContent = "";
     asciiEl.innerHTML = "";
     
-    fabCamera.classList.remove("fab-camera--on");
     updatePlaybackButtons("stop");
     setStatus("STANDBY");
     updateExportButtons();
@@ -493,6 +501,8 @@
     clearTransientFeedback();
     const text = asciiEl.textContent || asciiEl.innerText || "";
     const lines = text.replace(/\r\n/g, "\n").split("\n");
+    // 末尾の空行を除去
+    while (lines.length > 0 && lines[lines.length - 1].trim() === "") lines.pop();
     const rows = lines.length;
     const cols = Math.max(1, ...lines.map((l) => l.length));
     if (rows <= 1 || cols <= 1 || !text.trim()) {
@@ -500,20 +510,26 @@
       return;
     }
 
-    // Render ASCII to an offscreen canvas
     const out = document.createElement("canvas");
     const octx = out.getContext("2d");
-    const fontSize = 14;
-    const lineH = Math.round(fontSize * 1.05);
-    octx.font = `${state.fontWeight} ${fontSize}px "JetBrains Mono", Menlo, Consolas, monospace`;
+
+    // フォントを先に設定してから文字幅を計測
+    const fontSize = 10;
+    const fontStr = `${state.fontWeight} ${fontSize}px "JetBrains Mono", Menlo, Consolas, monospace`;
+    octx.font = fontStr;
     octx.textBaseline = "top";
 
-    const charW = Math.ceil(octx.measureText("M").width);
+    // モノスペースフォントの正確な文字幅を取得
+    const charW = octx.measureText("M").width;
+    // 行高さ: CHAR_ASPECT(1.9) に合わせて文字幅 × 1.9
+    // これにより表示と同じアスペクト比になる
+    const lineH = charW * CHAR_ASPECT;
     const pad = 16;
-    let w = cols * charW + pad * 2;
-    let h = rows * lineH + pad * 2;
 
-    // clamp to avoid huge exports
+    let w = Math.ceil(cols * charW) + pad * 2;
+    let h = Math.ceil(rows * lineH) + pad * 2;
+
+    // 4096px を上限にスケール
     const MAX = 4096;
     const scale = Math.min(1, MAX / Math.max(w, h));
     w = Math.max(1, Math.floor(w * scale));
@@ -521,7 +537,10 @@
     out.width = w;
     out.height = h;
 
+    // canvas サイズ変更後に再度フォントを設定（リセットされるため）
     octx.setTransform(scale, 0, 0, scale, 0, 0);
+    octx.font = fontStr;
+    octx.textBaseline = "top";
     octx.fillStyle = "#0116ff";
     octx.fillRect(0, 0, w / scale, h / scale);
     octx.fillStyle = "#f2f5ff";
@@ -546,13 +565,17 @@
   }
 
   function openDrawer() {
-    drawerBackdrop.classList.add("drawer-backdrop--open");
-    drawerBackdrop.setAttribute("aria-hidden", "false");
+    if (drawerBackdrop) {
+      drawerBackdrop.classList.add("drawer-backdrop--open");
+      drawerBackdrop.setAttribute("aria-hidden", "false");
+    }
   }
 
   function closeDrawer() {
-    drawerBackdrop.classList.remove("drawer-backdrop--open");
-    drawerBackdrop.setAttribute("aria-hidden", "true");
+    if (drawerBackdrop) {
+      drawerBackdrop.classList.remove("drawer-backdrop--open");
+      drawerBackdrop.setAttribute("aria-hidden", "true");
+    }
   }
 
   if (drawerContent) {
@@ -561,12 +584,12 @@
     clone.appendChild(sidebarPanels.cloneNode(true));
     drawerContent.replaceChildren(clone);
   }
-  btnStop.addEventListener("click", () => {
+  qsa("#btnStop").forEach((b) => b.addEventListener("click", () => {
     clearTransientFeedback();
     if (running) stopCamera();
-  });
-  
-  btnPlay.addEventListener("click", () => {
+  }));
+
+  qsa("#btnPlay").forEach((b) => b.addEventListener("click", () => {
     clearTransientFeedback();
     if (!running) {
       startCamera();
@@ -577,9 +600,9 @@
       rafId = requestAnimationFrame(loop);
       updateExportButtons();
     }
-  });
+  }));
 
-  btnPause.addEventListener("click", () => {
+  qsa("#btnPause").forEach((b) => b.addEventListener("click", () => {
     clearTransientFeedback();
     if (running) {
       state.realtime = false;
@@ -591,12 +614,8 @@
       updatePlaybackButtons("pause");
       updateExportButtons();
     }
-  });
+  }));
 
-  fabCamera.addEventListener("click", () => {
-    clearTransientFeedback();
-    toggleCamera();
-  });
   qsa("#btnExportTxt").forEach((b) =>
     b.addEventListener("click", () => {
       if (!running) {
@@ -604,7 +623,6 @@
         return;
       }
       exportAsciiTxt();
-      if (drawerBackdrop.classList.contains("drawer-backdrop--open")) closeDrawer();
     })
   );
   qsa("#btnExportJpg").forEach((b) =>
@@ -614,12 +632,12 @@
         return;
       }
       exportAsciiJpg();
-      if (drawerBackdrop.classList.contains("drawer-backdrop--open")) closeDrawer();
     })
   );
 
   qsa("#btnExportMov").forEach((b) => {
     b.addEventListener("click", async () => {
+      // 既に録画フロー起動済みなら無視（複数ボタンからの重複発火防止）
       if (isRecordingMov || recordingPhase === "countdown") return;
       if (!running) {
         alert("カメラ起動中でないと実行できません");
@@ -627,18 +645,16 @@
       }
       clearTransientFeedback();
 
+      // 即座にフラグを立てて重複起動を防ぐ
+      recordingPhase = "countdown";
+
       const btn = qsa("#btnExportMov")[0];
       setButtonDisabled("btnExportMov", true);
       setButtonText("btnExportMov", "3...");
-      qsa("#btnExportMov").forEach((el) => {
-        el.style.color = "#ff3366";
-        el.style.borderColor = "#ff3366";
-      });
+      setRecButtonStyle("#ff3366", "#ff3366");
       updateRecordingHud("countdown", "REC_IN_3");
       updatePlaybackButtons(state.realtime ? "play" : "pause");
       setStatus("REC_PREPARING");
-
-      if (drawerBackdrop.classList.contains("drawer-backdrop--open")) closeDrawer();
 
       let countdown = 3;
       clearRecordingTimers();
@@ -663,25 +679,35 @@
     const lines = text.replace(/\r\n/g, "\n").split("\n");
     const cols = (lines[0] || "").length || 80;
     const fsize = Math.round((14 * 80) / cols);
-    const lineH = fsize * 1.2;
     const pad = Math.max(20, fsize);
 
     recordCanvas = document.createElement("canvas");
     recordingCtx = recordCanvas.getContext("2d", { willReadFrequently: true });
+
+    // CHAR_ASPECT に合わせた行高さ（表示と同じアスペクト比）
     recordingCtx.font = `${state.fontWeight} ${fsize}px "JetBrains Mono", monospace`;
-    
+    const charW = recordingCtx.measureText("M").width;
+    const lineH = charW * CHAR_ASPECT;
+
     let maxW = 0;
     for (let i = 0; i < lines.length; i++) {
         const w = recordingCtx.measureText(lines[i]).width;
         if (w > maxW) maxW = w;
     }
-    recordCanvas.width = maxW + pad * 2;
-    recordCanvas.height = lines.length * lineH + pad * 2;
+    recordCanvas.width = Math.ceil(maxW) + pad * 2;
+    recordCanvas.height = Math.ceil(lines.length * lineH) + pad * 2;
 
+    // 初期フレームを即座に描画（一時停止中でも最初のフレームを確保）
     recordingCtx.fillStyle = "#0116ff";
     recordingCtx.fillRect(0, 0, recordCanvas.width, recordCanvas.height);
+    recordingCtx.fillStyle = "#ffffff";
+    recordingCtx.font = `${state.fontWeight} ${fsize}px "JetBrains Mono", monospace`;
+    recordingCtx.textBaseline = "top";
+    for (let i = 0; i < lines.length; i++) {
+      recordingCtx.fillText(lines[i] || "", pad, pad + i * lineH);
+    }
 
-    const stream = recordCanvas.captureStream(30);
+    const captureStream = recordCanvas.captureStream(30);
     let mimeString = "video/mp4;codecs=h264";
     let ext = "mp4";
     if (!MediaRecorder.isTypeSupported(mimeString)) {
@@ -690,10 +716,7 @@
     if (!MediaRecorder.isTypeSupported(mimeString)) {
       setButtonDisabled("btnExportMov", false);
       setButtonText("btnExportMov", "REC.MOV_(5S)");
-      qsa("#btnExportMov").forEach((el) => {
-        el.style.color = "";
-        el.style.borderColor = "";
-      });
+      setRecButtonStyle("", "");
       updateRecordingHud("idle");
       updatePlaybackButtons(state.realtime ? "play" : "pause");
       setStatus("MP4_RECORDING_NOT_SUPPORTED");
@@ -702,16 +725,13 @@
     }
     
     const options = MediaRecorder.isTypeSupported(mimeString) ? { mimeType: mimeString } : undefined;
-    const movieRecorder = new MediaRecorder(stream, options);
+    const movieRecorder = new MediaRecorder(captureStream, options);
     const recordChunks = [];
 
     movieRecorder.onerror = (event) => {
       console.error(event.error || event);
       isRecordingMov = false;
-      qsa("#btnExportMov").forEach((el) => {
-        el.style.color = "";
-        el.style.borderColor = "";
-      });
+      setRecButtonStyle("", "");
       setButtonText("btnExportMov", "REC.MOV_(5S)");
       clearRecordingTimers();
       updateRecordingHud("idle");
@@ -735,10 +755,7 @@
       
       setButtonDisabled("btnExportMov", false);
       setButtonText("btnExportMov", "REC.MOV_(5S)");
-      qsa("#btnExportMov").forEach((el) => {
-        el.style.color = "";
-        el.style.borderColor = "";
-      });
+      setRecButtonStyle("", "");
       isRecordingMov = false;
       recordCanvas = null;
       recordingCtx = null;
@@ -755,6 +772,20 @@
     updatePlaybackButtons(state.realtime ? "play" : "pause");
     setStatus("REC_RECORDING");
 
+    // 一時停止中でも canvas を定期的に再描画して captureStream にフレームを供給する
+    // （captureStream は canvas の変化がないとフレームを出力しないため）
+    let recordRafId = 0;
+    const recordingLoop = () => {
+      if (!isRecordingMov) return;
+      // 一時停止中（!state.realtime）でも renderAsciiFrame を呼ぶ
+      renderAsciiFrame();
+      recordRafId = requestAnimationFrame(recordingLoop);
+    };
+    // リアルタイム再生中は既存ループが動いているので、一時停止中のみ補助ループを起動
+    if (!state.realtime) {
+      recordRafId = requestAnimationFrame(recordingLoop);
+    }
+
     let secondsLeft = 5;
     recordingDurationTimer = setInterval(() => {
       secondsLeft--;
@@ -764,6 +795,7 @@
       } else {
          clearInterval(recordingDurationTimer);
          recordingDurationTimer = 0;
+         cancelAnimationFrame(recordRafId);
          if (movieRecorder.state !== "inactive") {
            movieRecorder.stop();
          }
@@ -771,32 +803,9 @@
     }, 1000);
   }
 
-  btnCloseDrawer.addEventListener("click", closeDrawer);
-  drawerBackdrop.addEventListener("click", (e) => {
-    if (e.target === drawerBackdrop) closeDrawer();
-  });
+  // drawerBackdrop/btnCloseDrawer は削除済みのため参照しない
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") closeDrawer();
-  });
-
-  navCamera.addEventListener("click", () => {
-    clearTransientFeedback();
-    toggleCamera();
-  });
-
-  navSettings.addEventListener("click", () => {
-    clearTransientFeedback();
-    openDrawer();
-  });
-
-  navHistory.addEventListener("click", () => {
-    clearTransientFeedback();
-    setStatus("LOG_//_準備中");
-  });
-
-  navProfile.addEventListener("click", () => {
-    clearTransientFeedback();
-    setStatus("USER_//_準備中");
   });
 
   bindSyncedValue("cols", (v) => {
@@ -827,6 +836,8 @@
   bindSyncedValue("customCharset", (v) => {
     clearTransientFeedback();
     state.customCharset = v;
+    // テキストがあれば Manual Input を有効化、空なら無効化
+    state.useCustomCharset = Boolean(v.trim()) && v.trim().length >= 2;
     updateCharsetButtons(state.charset);
     updateManualInputState();
     scheduleFrame();
@@ -855,7 +866,10 @@
         el.value = value;
       });
       state.charset = value;
+      // Manual Input を無効化（テキストは残す）
+      state.useCustomCharset = false;
       updateCharsetButtons(value);
+      updateManualInputState();
       scheduleFrame();
     });
   });
@@ -864,6 +878,35 @@
   updateControlLabels();
   updatePlaybackButtons("stop");
   updateExportButtons();
+
+  // ─── Mobile Tab Bar ───────────────────────────────────────────
+  const mobileTabBtns = document.querySelectorAll(".mobile-tab-bar__tab");
+  const mobilePanels = document.querySelectorAll(".mobile-panel");
+
+  mobileTabBtns.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      const target = tab.dataset.panel;
+      mobileTabBtns.forEach((t) => t.classList.toggle("mobile-tab-bar__tab--active", t === tab));
+      mobilePanels.forEach((p) => {
+        p.classList.toggle("mobile-panel--active", p.id === `mobile-panel-${target}`);
+      });
+    });
+  });
+
+  // ─── Mobile Controls Toggle ───────────────────────────────────
+  const btnToggleControls = document.getElementById("btnToggleControls");
+
+  if (btnToggleControls) {
+    btnToggleControls.addEventListener("click", () => {
+      // position: fixed 要素に祖先セレクタを効かせるため body にクラスを付ける
+      const isHidden = document.body.classList.toggle("controls-hidden");
+      btnToggleControls.setAttribute("aria-pressed", String(isHidden));
+      btnToggleControls.setAttribute(
+        "aria-label",
+        isHidden ? "コントロールパネルを表示" : "コントロールパネルを隠す"
+      );
+    });
+  }
 
   window.addEventListener("beforeunload", () => {
     stopCamera();

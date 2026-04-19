@@ -1,0 +1,425 @@
+/**
+ * Mobile UI — タブバー + パネルシート + トランスポートバー
+ * モバイル専用 (max-width: 899px)
+ */
+
+/* ─── CSS変数 ─── */
+:root {
+  --mobile-tab-h: 56px;
+  --mobile-transport-h: 72px;
+  --mobile-panel-h: 220px;
+}
+
+/* ─── タブバー (デフォルト非表示) ─── */
+.mobile-tab-bar {
+  display: none;
+}
+
+@media (max-width: 899px) {
+
+  /* ─── スクロール禁止 ─── */
+  html, body {
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
+  /* ─── タブバー ─── */
+  .mobile-tab-bar {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    z-index: 26;
+    bottom: calc(var(--mobile-transport-h) + var(--mobile-panel-h) + env(safe-area-inset-bottom, 0px));
+    height: var(--mobile-tab-h);
+    background: rgba(9, 9, 11, 0.92);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border-top: 1px solid rgba(67, 70, 87, 0.5);
+    padding: 8px 16px;
+    gap: 8px;
+    align-items: stretch;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .mobile-tab-bar__tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 8px 4px;
+    border: none;
+    background: transparent;
+    color: #a1a1aa;
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 15px;
+    cursor: pointer;
+    transition: color 0.15s, background 0.15s;
+  }
+
+  .mobile-tab-bar__tab svg {
+    flex-shrink: 0;
+  }
+
+  .mobile-tab-bar__tab--active {
+    background: #1c1b1b;
+    color: #ffffff;
+  }
+
+  .mobile-tab-bar__tab:not(.mobile-tab-bar__tab--active):hover {
+    color: #e4e4e7;
+  }
+
+  /* ─── パネルシート ─── */
+  .mobile-panels {
+    display: block;
+    position: fixed;
+    left: 0;
+    right: 0;
+    z-index: 25;
+    bottom: calc(var(--mobile-transport-h) + env(safe-area-inset-bottom, 0px));
+    height: var(--mobile-panel-h);
+    background: #0b0b0d;
+    border-top: 1px solid rgba(67, 70, 87, 0.5);
+    overflow: hidden;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .mobile-panel {
+    display: none;
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobile-panel--active {
+    display: flex;
+  }
+
+  .mobile-panel .slider-group {
+    gap: 8px;
+  }
+
+  .mobile-panel .side-panel__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .mobile-panel .side-panel__label {
+    color: #a1a1aa;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .mobile-panel .side-panel__value {
+    color: #e5e2e1;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+  }
+
+  .mobile-panel .charset-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .mobile-panel .charset-button {
+    min-height: 40px;
+    font-size: 10px;
+  }
+
+  .mobile-panel .control-input {
+    font-size: 12px;
+  }
+
+  .mobile-panel .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 0;
+  }
+
+  .mobile-panel .export-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .mobile-panel .export-button {
+    min-height: 48px;
+    font-size: 10px;
+    justify-content: space-between;
+    padding: 12px 16px;
+  }
+
+  /* ─── トランスポートバー ─── */
+  .mobile-transport {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    z-index: 24;
+    bottom: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    height: calc(var(--mobile-transport-h) + env(safe-area-inset-bottom, 0px));
+    background: #0b0b0d;
+    border-top: 1px solid rgba(67, 70, 87, 0.5);
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .mobile-transport .transport-button {
+    height: 48px;
+    border: 1px solid #434657;
+    background: transparent;
+    color: #e5e2e1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: border-color 0.16s ease, background 0.16s ease, color 0.16s ease,
+      transform 0.16s ease, opacity 0.16s ease;
+    flex-shrink: 0;
+  }
+
+  .mobile-transport .transport-button:not(.transport-button--primary):not(.transport-button--rec):not(.transport-button--toggle) {
+    width: 48px;
+  }
+
+  .mobile-transport .transport-button--primary {
+    flex: 1;
+    max-width: 200px;
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  .mobile-transport .transport-button--primary span {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    line-height: 16px;
+  }
+
+  .mobile-transport .transport-button--rec {
+    padding-left: 16px;
+    padding-right: 16px;
+    gap: 6px;
+    min-width: 72px;
+  }
+
+  .mobile-transport .transport-button--rec .export-button__text {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    line-height: 15px;
+    color: #e5e2e1;
+  }
+
+  .mobile-transport .transport-button--rec .export-button__dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    background: #ff6d54;
+    flex-shrink: 0;
+  }
+
+  /* トグルボタン（右端） */
+  .mobile-transport .transport-button--toggle {
+    width: 36px;
+    min-width: 36px;
+    flex-shrink: 0;
+    border-color: rgba(67, 70, 87, 0.6);
+  }
+
+  .mobile-transport .transport-button--toggle svg {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .mobile-transport .transport-button[aria-pressed="true"] {
+    background: #0047ff;
+    border-color: #ffffff;
+    color: #e5e2e1;
+  }
+
+  /* トグルボタンはアクティブ状態でも青くしない */
+  .mobile-transport .transport-button--toggle[aria-pressed="true"] {
+    background: transparent;
+    border-color: rgba(67, 70, 87, 0.6);
+    color: #e5e2e1;
+  }
+
+  .mobile-transport .transport-button:hover:not(:disabled),
+  .mobile-transport .transport-button:focus-visible:not(:disabled) {
+    outline: none;
+    border-color: #8e8fa3;
+    color: #fff;
+  }
+
+  .mobile-transport .transport-button:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+
+  .mobile-transport .transport-button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  /* ─── view-stage ─── */
+  .view-stage {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: calc(
+      var(--mobile-transport-h) +
+      var(--mobile-panel-h) +
+      var(--mobile-tab-h) +
+      env(safe-area-inset-bottom, 0px)
+    ) !important;
+    height: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    padding: 6px 0 !important;
+    overflow: hidden !important;
+    overscroll-behavior: none;
+    z-index: 0;
+    transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+
+  /* ─── ASCII ビューポート ─── */
+  /*
+   * 通常状態: 4rem のパディング込みで正方形
+   * view-stage 高さ = 100dvh - transport - panel - tab - safe-area
+   * 利用可能高さ = view-stage 高さ - status/copyright/padding/gap(52px)
+   * 一辺 = min(100vw - 4rem, 利用可能高さ)
+   */
+  .ascii-viewport {
+    --_avail-h: calc(
+      100dvh -
+      var(--mobile-transport-h) -
+      var(--mobile-panel-h) -
+      var(--mobile-tab-h) -
+      env(safe-area-inset-bottom, 0px) -
+      52px
+    );
+    width: min(calc(100vw - 4rem), var(--_avail-h));
+    height: min(calc(100vw - 4rem), var(--_avail-h));
+    max-width: calc(100vw - 4rem);
+    flex-shrink: 0;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .ascii-viewport__inner {
+    container-type: inline-size;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    overflow: hidden !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .ascii-viewport pre.ascii-output {
+    font-size: calc(100cqi / var(--cols, 80) * 1.9) !important;
+    width: 100% !important;
+    height: 100% !important;
+    overflow: hidden !important;
+  }
+
+  .view-stage__status {
+    position: static !important;
+    flex-shrink: 0;
+    margin: 0 !important;
+    font-size: 0.6rem;
+    line-height: 1.3;
+  }
+
+  .view-stage__copyright {
+    position: static !important;
+    flex-shrink: 0;
+  }
+
+  /* ─── app-shell 系 ─── */
+  .app-shell,
+  .app-shell__body,
+  .app-shell__main,
+  .main-workspace {
+    overflow: hidden;
+  }
+
+  .app-shell__main {
+    padding-bottom: 0 !important;
+  }
+
+  /* ─── コントロールハイド状態 (body.controls-hidden) ─── */
+  /* position: fixed 要素に効かせるため body にクラスを付ける */
+
+  /* タブバーとパネルを下にスライドアウト */
+  body.controls-hidden .mobile-tab-bar,
+  body.controls-hidden .mobile-panels {
+    transform: translateY(100%);
+    pointer-events: none;
+  }
+
+  /* 矢印を下向きに回転 */
+  body.controls-hidden .transport-button--toggle svg {
+    transform: rotate(180deg);
+  }
+
+  /* view-stage をトランスポートバーの直上まで広げる */
+  body.controls-hidden .view-stage {
+    bottom: calc(
+      var(--mobile-transport-h) +
+      env(safe-area-inset-bottom, 0px)
+    ) !important;
+  }
+
+  /* ascii-viewport をハイド時の利用可能サイズに合わせる */
+  body.controls-hidden .ascii-viewport {
+    --_avail-h: calc(
+      100dvh -
+      var(--mobile-transport-h) -
+      env(safe-area-inset-bottom, 0px) -
+      52px
+    );
+    width: min(calc(100vw - 4rem), var(--_avail-h));
+    height: min(calc(100vw - 4rem), var(--_avail-h));
+  }
+}
+
+/* ─── デスクトップでは新モバイルUIを非表示 ─── */
+@media (min-width: 900px) {
+  .mobile-tab-bar,
+  .mobile-panels,
+  .mobile-transport {
+    display: none !important;
+  }
+}

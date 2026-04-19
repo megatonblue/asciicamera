@@ -181,57 +181,157 @@
       </div>
     </div>
 
-    <button type="button" class="fab-camera" id="fabCamera" title="カメラ">
-      <span class="sr-only">カメラ</span>
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-        <circle cx="12" cy="13" r="4" />
-      </svg>
-    </button>
-
-    <nav class="bottom-nav" aria-label="モバイルナビ">
-      <button type="button" class="bottom-nav__btn bottom-nav__btn--active" id="navCamera" data-action="camera">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-          <circle cx="12" cy="13" r="4" />
+    <!-- Mobile Tab Bar -->
+    <nav class="mobile-tab-bar" aria-label="パネル切り替え">
+      <button type="button" class="mobile-tab-bar__tab mobile-tab-bar__tab--active" data-panel="params">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="14" y2="12"/><line x1="4" y1="18" x2="17" y2="18"/>
         </svg>
-        CAM
+        PARAMS
       </button>
-      <button type="button" class="bottom-nav__btn" id="navSettings" data-action="settings">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-          <path
-            d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9h2V7H3v2h4zm14 4h-4v2h4v-2zm-6-4h2V7h-4v2h2z" />
+      <button type="button" class="mobile-tab-bar__tab" data-panel="character">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/>
         </svg>
-        TUNE
+        CHARACTER
       </button>
-      <button type="button" class="bottom-nav__btn" id="navHistory" data-action="history">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      <button type="button" class="mobile-tab-bar__tab" data-panel="modifiers">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M7 16V4m0 0L3 8m4-4 4 4M17 8v12m0 0 4-4m-4 4-4-4"/>
         </svg>
-        LOG
+        MODIFIERS
       </button>
-      <button type="button" class="bottom-nav__btn" id="navProfile" data-action="profile">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-          <path
-            d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+      <button type="button" class="mobile-tab-bar__tab" data-panel="export">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
         </svg>
-        USER
+        EXPORT
       </button>
     </nav>
-  </div>
 
-  <div class="drawer-backdrop" id="drawerBackdrop" aria-hidden="true">
-    <div class="drawer-panel" role="dialog" aria-modal="true" aria-label="Menu" tabindex="-1">
-      <div class="drawer-panel__head">
-        <p class="drawer-panel__title">MATRIX_LABS</p>
-        <button type="button" class="drawer-panel__close" id="btnCloseDrawer" aria-label="閉じる">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 6L6 18M6 6l12 12" />
-          </svg>
-        </button>
+    <!-- Mobile Panel Sheets -->
+    <div class="mobile-panels" id="mobilePanels">
+      <!-- PARAMS panel -->
+      <div class="mobile-panel mobile-panel--active" id="mobile-panel-params">
+        <div class="slider-group">
+          <div class="side-panel__row">
+            <span class="side-panel__label">DENSITY</span>
+            <span class="side-panel__value" id="densityPct">0.85</span>
+          </div>
+          <input type="range" class="control-slider" id="cols" min="40" max="140" value="85" step="5" />
+        </div>
+        <div class="slider-group">
+          <div class="side-panel__row">
+            <span class="side-panel__label">FONT_WEIGHT</span>
+            <span class="side-panel__value" id="fontWeightValue">400</span>
+          </div>
+          <input type="range" class="control-slider" id="fontWeight" min="100" max="800" value="400" step="100" />
+        </div>
+        <div class="slider-group">
+          <div class="side-panel__row">
+            <span class="side-panel__label">SENSITIVITY</span>
+            <span class="side-panel__value" id="contrastValue">1.2X</span>
+          </div>
+          <input type="range" class="control-slider" id="contrast" min="0.5" max="2.5" value="1.2" step="0.05" />
+        </div>
       </div>
-      <div id="drawerContent" aria-label="Sidebar content (mobile)"></div>
+
+      <!-- CHARACTER panel -->
+      <div class="mobile-panel" id="mobile-panel-character">
+        <div class="charset-grid">
+          <button type="button" class="charset-button charset-button--active" data-charset="detailed" aria-pressed="true">DETAILED</button>
+          <button type="button" class="charset-button" data-charset="simple" aria-pressed="false">SIMPLE</button>
+          <button type="button" class="charset-button" data-charset="blocks" aria-pressed="false">BLOCKS</button>
+          <button type="button" class="charset-button" data-charset="minimal" aria-pressed="false">MINIMAL</button>
+        </div>
+        <input type="text" class="control-input" id="customCharset" placeholder="CUSTOM INPUT" spellcheck="false" autocomplete="off" />
+      </div>
+
+      <!-- MODIFIERS panel -->
+      <div class="mobile-panel" id="mobile-panel-modifiers">
+        <div class="toggle-row">
+          <span class="side-panel__label">MIRROR</span>
+          <label class="toggle">
+            <input type="checkbox" id="mirror" checked />
+            <span class="toggle__track"><span class="toggle__thumb"></span></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span class="side-panel__label">INVERT</span>
+          <label class="toggle">
+            <input type="checkbox" id="invert" />
+            <span class="toggle__track"><span class="toggle__thumb"></span></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span class="side-panel__label">COLOR_SAMPLE</span>
+          <label class="toggle">
+            <input type="checkbox" id="color" />
+            <span class="toggle__track"><span class="toggle__thumb"></span></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- EXPORT panel -->
+      <div class="mobile-panel" id="mobile-panel-export">
+        <div class="export-grid">
+          <button type="button" class="export-button" id="btnExportJpg">
+            <span>.JPG</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+              <rect x="4" y="4" width="16" height="16" rx="1"></rect>
+              <path d="m7 15 3-3 3 3 2-2 2 2"></path>
+              <circle cx="9" cy="9" r="1"></circle>
+            </svg>
+          </button>
+          <button type="button" class="export-button" id="btnExportTxt">
+            <span>COPY.TXT</span>
+            <span class="export-button__icon-wrap" aria-hidden="true">
+              <svg class="export-button__icon export-button__icon--copy" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <rect x="9" y="9" width="11" height="11" rx="2"></rect>
+                <rect x="4" y="4" width="11" height="11" rx="2"></rect>
+              </svg>
+              <svg class="export-button__icon export-button__icon--check" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="M5 12.5 9.2 16.5 19 6.5"></path>
+              </svg>
+            </span>
+          </button>
+        </div>
+      </div>
     </div>
+
+    <!-- Mobile Transport Bar -->
+    <div class="mobile-transport" id="mobileTransport">
+      <button type="button" class="transport-button" id="btnStop" title="停止" aria-pressed="false">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <rect x="6" y="6" width="12" height="12"></rect>
+        </svg>
+      </button>
+      <button type="button" class="transport-button transport-button--primary" id="btnPlay" title="再生" aria-pressed="false">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <polygon points="8 6 18 12 8 18 8 6"></polygon>
+        </svg>
+        <span>PLAY</span>
+      </button>
+      <button type="button" class="transport-button" id="btnPause" title="一時停止" aria-pressed="false">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <rect x="6" y="5" width="4" height="14"></rect>
+          <rect x="14" y="5" width="4" height="14"></rect>
+        </svg>
+      </button>
+      <button type="button" class="transport-button transport-button--rec" id="btnExportMov" title="録画">
+        <span class="export-button__dot"></span>
+        <span class="export-button__text">(5s)</span>
+      </button>
+      <!-- コントロールパネル ハイド/表示トグル（右端） -->
+      <button type="button" class="transport-button transport-button--toggle" id="btnToggleControls" title="コントロール表示切替" aria-pressed="false" aria-label="コントロールパネルを隠す">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <polyline points="18 15 12 9 6 15"></polyline>
+        </svg>
+      </button>
+    </div>
+
+    <nav class="bottom-nav" aria-label="モバイルナビ" hidden>
+    </nav>
   </div>
 
   <video id="video" playsinline muted autoplay></video>

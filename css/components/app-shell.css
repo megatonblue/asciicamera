@@ -31,6 +31,7 @@
 }
 
 @media (max-width: 899px) {
+  /* mobile-ui.css で padding-bottom: 0 !important に上書きされる */
   .app-shell__main {
     padding-bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0));
   }
