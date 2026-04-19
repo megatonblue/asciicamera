@@ -1,84 +1,97 @@
 <!DOCTYPE html>
 <html lang="ja">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="theme-color" content="#0116ff" />
-    <title>DIGITAL ALCHEMIST</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100..800&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="css/main.css" />
-  </head>
-  <body>
-    <div class="app-shell">
 
-      <div class="app-shell__body">
-        <aside class="matrix-sidebar" aria-label="Settings panel">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0116ff" />
+  <title>DIGITAL ALCHEMIST</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100..800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+</head>
 
-          <div class="matrix-sidebar__panels" id="sidebarPanels">
-            <section class="side-panel side-panel--active" role="tabpanel" id="panel-controls" aria-labelledby="tab-controls">
-              <div class="side-panel__section" style="display: flex; justify-content: center; gap: 0.75rem; padding-bottom: 1rem;">
-                <button type="button" class="btn-playback" id="btnStop" title="停止">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12"></rect></svg>
-                </button>
-                <button type="button" class="btn-playback btn-playback--play" id="btnPlay" title="再生">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                </button>
-                <button type="button" class="btn-playback" id="btnPause" title="一時停止">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
-                </button>
-              </div>
-              <div class="side-panel__section" id="section-density">
-                <div class="side-panel__row">
-                  <span class="side-panel__label">DENSITY</span>
-                  <span class="side-panel__value" id="densityPct">50%</span>
+<body>
+  <div class="app-shell">
+
+    <div class="app-shell__body">
+      <aside class="matrix-sidebar" aria-label="Settings panel">
+        <div class="matrix-sidebar__panels" id="sidebarPanels">
+          <section class="side-panel side-panel--active" role="tabpanel" id="panel-controls"
+            aria-labelledby="tab-controls">
+            <div class="matrix-sidebar__version">v0.0.1</div>
+
+            <div class="transport-controls">
+              <button type="button" class="transport-button" id="btnStop" title="停止" aria-pressed="false">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <rect x="6" y="6" width="12" height="12"></rect>
+                </svg>
+              </button>
+              <button type="button" class="transport-button transport-button--primary" id="btnPlay" title="再生" aria-pressed="false">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <polygon points="8 6 18 12 8 18 8 6"></polygon>
+                </svg>
+                <span>PLAY</span>
+              </button>
+              <button type="button" class="transport-button" id="btnPause" title="一時停止" aria-pressed="false">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <rect x="6" y="5" width="4" height="14"></rect>
+                  <rect x="14" y="5" width="4" height="14"></rect>
+                </svg>
+              </button>
+            </div>
+
+            <div class="sidebar-stack">
+              <section class="sidebar-card">
+                <h2 class="sidebar-heading">REAL_TIME_PARAMS</h2>
+
+                <div class="slider-group">
+                  <div class="side-panel__row">
+                    <span class="side-panel__label">DENSITY</span>
+                    <span class="side-panel__value" id="densityPct">0.85</span>
+                  </div>
+                  <input type="range" class="control-slider" id="cols" min="40" max="140" value="85" step="5" />
                 </div>
-                <input type="range" class="control-slider" id="cols" min="40" max="140" value="80" step="5" />
 
-                <div class="side-panel__row" style="margin-top: 1rem">
-                  <span class="side-panel__label">FONT_WEIGHT</span>
-                  <span class="side-panel__value" id="fontWeightValue">400</span>
+                <div class="slider-group">
+                  <div class="side-panel__row">
+                    <span class="side-panel__label">FONT_WEIGHT</span>
+                    <span class="side-panel__value" id="fontWeightValue">400</span>
+                  </div>
+                  <input type="range" class="control-slider" id="fontWeight" min="100" max="800" value="400" step="100" />
                 </div>
-                <input type="range" class="control-slider" id="fontWeight" min="100" max="800" value="400" step="100" />
-              </div>
 
-              <div class="side-panel__section" id="section-contrast">
-                <div class="side-panel__row">
-                  <span class="side-panel__label">SENSITIVITY</span>
-                  <span class="side-panel__value" id="contrastValue">[1.20]</span>
+                <div class="slider-group">
+                  <div class="side-panel__row">
+                    <span class="side-panel__label">SENSITIVITY</span>
+                    <span class="side-panel__value" id="contrastValue">1.2X</span>
+                  </div>
+                  <input type="range" class="control-slider" id="contrast" min="0.5" max="2.5" value="1.2" step="0.05" />
                 </div>
-                <input type="range" class="control-slider" id="contrast" min="0.5" max="2.5" value="1.2" step="0.05" />
-              </div>
+              </section>
 
-              <div class="side-panel__section" id="section-charset">
-                <div class="side-panel__row">
-                  <span class="side-panel__label">CHAR_SET</span>
-                </div>
-                <select class="control-select" id="charset">
+              <section class="sidebar-card">
+                <h2 class="sidebar-heading">CHARACTER_SETS</h2>
+                <select class="sr-only" id="charset" aria-label="Character set">
                   <option value="detailed">DETAILED</option>
                   <option value="simple">SIMPLE</option>
                   <option value="blocks">BLOCKS</option>
                   <option value="minimal">MINIMAL</option>
                 </select>
-                <div class="side-panel__row" style="margin-top: 0.65rem">
-                  <span class="side-panel__label">CUSTOM_CHAR_INPUT</span>
+                <div class="charset-grid" role="group" aria-label="Character set presets">
+                  <button type="button" class="charset-button charset-button--active" data-charset="detailed" aria-pressed="true">DETAILED</button>
+                  <button type="button" class="charset-button" data-charset="simple" aria-pressed="false">SIMPLE</button>
+                  <button type="button" class="charset-button" data-charset="blocks" aria-pressed="false">BLOCKS</button>
+                  <button type="button" class="charset-button" data-charset="minimal" aria-pressed="false">MINIMAL</button>
                 </div>
-                <input
-                  type="text"
-                  class="control-input"
-                  id="customCharset"
-                  placeholder="@%#*+=-:. "
-                  spellcheck="false"
-                  autocomplete="off"
-                />
-              </div>
+                <input type="text" class="control-input" id="customCharset" placeholder="MANUAL_INPUT" spellcheck="false"
+                  autocomplete="off" />
+              </section>
 
-              <div class="side-panel__section" id="section-invert">
-
+              <section class="sidebar-card">
+                <h2 class="sidebar-heading">MODIFIERS</h2>
                 <div class="toggle-row">
                   <span class="side-panel__label">MIRROR</span>
                   <label class="toggle">
@@ -100,78 +113,131 @@
                     <span class="toggle__track"><span class="toggle__thumb"></span></span>
                   </label>
                 </div>
+              </section>
+            </div>
 
-                <div class="matrix-sidebar__export" style="margin-top: 2rem;">
-                  <button type="button" class="btn-export" id="btnExportJpg">JPG EXPORT</button>
-                  <button type="button" class="btn-export btn-export--secondary" id="btnExportTxt" style="margin-top: 0.65rem">TXT EXPORT</button>
-                  <button type="button" class="btn-export btn-export--secondary" id="btnExportMov" style="margin-top: 0.65rem">MOV EXPORT (5S)</button>
-                </div>
+            <div class="matrix-sidebar__footer">
+              <h2 class="sidebar-heading">INITIALIZE_EXPORT</h2>
+              <div class="export-grid">
+                <button type="button" class="export-button" id="btnExportJpg">
+                  <span>.JPG</span>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                    <rect x="4" y="4" width="16" height="16" rx="1"></rect>
+                    <path d="m7 15 3-3 3 3 2-2 2 2"></path>
+                    <circle cx="9" cy="9" r="1"></circle>
+                  </svg>
+                </button>
+                <button type="button" class="export-button" id="btnExportTxt">
+                  <span>COPY.TXT</span>
+                  <span class="export-button__icon-wrap" aria-hidden="true">
+                    <svg class="export-button__icon export-button__icon--copy" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                      <rect x="9" y="9" width="11" height="11" rx="2"></rect>
+                      <rect x="4" y="4" width="11" height="11" rx="2"></rect>
+                    </svg>
+                    <svg class="export-button__icon export-button__icon--check" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                      <path d="M5 12.5 9.2 16.5 19 6.5"></path>
+                    </svg>
+                  </span>
+                </button>
               </div>
-            </section>
-          </div>
-        </aside>
+              <button type="button" class="export-button export-button--wide" id="btnExportMov">
+                <span class="export-button__group">
+                  <span class="export-button__dot"></span>
+                  <span class="export-button__text">REC.MOV_(5S)</span>
+                </span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                  <path d="M3 7h18v11H3z"></path>
+                  <path d="m7 3 2 4"></path>
+                  <path d="m12 3 2 4"></path>
+                  <path d="m17 3 2 4"></path>
+                </svg>
+              </button>
+            </div>
+          </section>
+        </div>
+      </aside>
 
-        <div class="app-shell__main">
-          <div class="main-workspace">
-            <section class="view-stage" aria-label="ASCII preview">
-              <div class="ascii-viewport">
-                <div class="ascii-viewport__inner">
-                  <pre id="ascii" class="ascii-output" aria-live="polite"></pre>
-                </div>
+      <div class="app-shell__main">
+        <div class="main-workspace">
+          <section class="view-stage" aria-label="ASCII preview">
+            <div class="recording-hud" id="recordingHud" aria-live="polite" hidden>
+              <span class="recording-hud__dot"></span>
+              <span class="recording-hud__label" id="recordingHudLabel">REC</span>
+            </div>
+            <div class="ascii-viewport">
+              <div class="ascii-viewport__inner">
+                <pre id="ascii" class="ascii-output" aria-live="polite"></pre>
               </div>
-              <p id="status" class="view-stage__status">カメラを開始してください</p>
-              <p class="view-stage__copyright" style="margin: 0; font-family: var(--font-mono); font-size: 0.55rem; color: rgba(255, 255, 255, 0.4); text-align: center; letter-spacing: 0.05em;">&copy; Atsushi Imaoka</p>
+            </div>
+            <p id="status" class="view-stage__status">カメラを開始してください</p>
+            <p class="view-stage__copyright"
+              style="margin: 0; font-family: var(--font-mono); font-size: 0.55rem; color: rgba(255, 255, 255, 0.4); text-align: center; letter-spacing: 0.05em;">
+              &copy; Atsushi Imaoka</p>
 
-            </section>
+          </section>
 
-            <!-- controls moved into left sidebar tabs -->
-          </div>
+          <!-- controls moved into left sidebar tabs -->
         </div>
       </div>
+    </div>
 
-      <button type="button" class="fab-camera" id="fabCamera" title="カメラ">
-        <span class="sr-only">カメラ</span>
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-          <circle cx="12" cy="13" r="4"/>
+    <button type="button" class="fab-camera" id="fabCamera" title="カメラ">
+      <span class="sr-only">カメラ</span>
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+        <circle cx="12" cy="13" r="4" />
+      </svg>
+    </button>
+
+    <nav class="bottom-nav" aria-label="モバイルナビ">
+      <button type="button" class="bottom-nav__btn bottom-nav__btn--active" id="navCamera" data-action="camera">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+          <circle cx="12" cy="13" r="4" />
         </svg>
+        CAM
       </button>
+      <button type="button" class="bottom-nav__btn" id="navSettings" data-action="settings">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+          <path
+            d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9h2V7H3v2h4zm14 4h-4v2h4v-2zm-6-4h2V7h-4v2h2z" />
+        </svg>
+        TUNE
+      </button>
+      <button type="button" class="bottom-nav__btn" id="navHistory" data-action="history">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        LOG
+      </button>
+      <button type="button" class="bottom-nav__btn" id="navProfile" data-action="profile">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+          <path
+            d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+        </svg>
+        USER
+      </button>
+    </nav>
+  </div>
 
-      <nav class="bottom-nav" aria-label="モバイルナビ">
-        <button type="button" class="bottom-nav__btn bottom-nav__btn--active" id="navCamera" data-action="camera">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-          CAM
+  <div class="drawer-backdrop" id="drawerBackdrop" aria-hidden="true">
+    <div class="drawer-panel" role="dialog" aria-modal="true" aria-label="Menu" tabindex="-1">
+      <div class="drawer-panel__head">
+        <p class="drawer-panel__title">MATRIX_LABS</p>
+        <button type="button" class="drawer-panel__close" id="btnCloseDrawer" aria-label="閉じる">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
         </button>
-        <button type="button" class="bottom-nav__btn" id="navSettings" data-action="settings">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9h2V7H3v2h4zm14 4h-4v2h4v-2zm-6-4h2V7h-4v2h2z"/></svg>
-          TUNE
-        </button>
-        <button type="button" class="bottom-nav__btn" id="navHistory" data-action="history">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          LOG
-        </button>
-        <button type="button" class="bottom-nav__btn" id="navProfile" data-action="profile">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-          USER
-        </button>
-      </nav>
-    </div>
-
-    <div class="drawer-backdrop" id="drawerBackdrop" aria-hidden="true">
-      <div class="drawer-panel" role="dialog" aria-modal="true" aria-label="Menu" tabindex="-1">
-        <div class="drawer-panel__head">
-          <p class="drawer-panel__title">MATRIX_LABS</p>
-          <button type="button" class="drawer-panel__close" id="btnCloseDrawer" aria-label="閉じる">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-          </button>
-        </div>
-        <div id="drawerContent" aria-label="Sidebar content (mobile)"></div>
       </div>
+      <div id="drawerContent" aria-label="Sidebar content (mobile)"></div>
     </div>
+  </div>
 
-    <video id="video" playsinline muted autoplay></video>
-    <canvas id="capture"></canvas>
+  <video id="video" playsinline muted autoplay></video>
+  <canvas id="capture"></canvas>
 
-    <script src="app.js"></script>
-  </body>
+  <script src="app.js"></script>
+</body>
+
 </html>
