@@ -184,6 +184,17 @@
     });
   }
 
+  function setRecButtonText(desktopText, mobileText) {
+    qsa("#btnExportMov").forEach((el) => {
+      const textTarget = el.querySelector(".export-button__text");
+      if (textTarget) {
+        // デスクトップ版かモバイル版かを判定
+        const isDesktop = el.classList.contains("export-button--wide");
+        textTarget.textContent = isDesktop ? desktopText : mobileText;
+      }
+    });
+  }
+
   function updatePlaybackButtons(mode) {
     setPressedState("btnStop", mode === "stop");
     setPressedState("btnPlay", mode === "play");
@@ -345,27 +356,46 @@
     else asciiEl.textContent = out;
     updateExportButtons();
 
-    if (isRecordingMov && recordingCtx && recordCanvas) {
-      const fsize = Math.round((14 * 80) / cols);
-      // CHAR_ASPECT に合わせた行高さ（表示と同じアスペクト比）
-      const charW = recordingCtx.measureText ? (() => {
-        recordingCtx.font = `${state.fontWeight} ${fsize}px "JetBrains Mono", monospace`;
-        return recordingCtx.measureText("M").width;
-      })() : fsize * 0.6;
-      const lineH = charW * CHAR_ASPECT;
-      const pad = Math.max(20, fsize);
-      
+    if (isRecordingMov && recordingCtx && recordCanvas && window._recordingParams) {
       const text = asciiEl.textContent || asciiEl.innerText || "";
-      const lines = text.replace(/\r\n/g, "\n").split("\n");
-
+      const lines = text.split("\n");
+      
+      const { tempCanvas, offsetX, offsetY } = window._recordingParams;
+      
+      // tempCanvasを更新
+      const tempCtx = tempCanvas.getContext("2d");
+      const computedStyle = window.getComputedStyle(asciiEl);
+      const displayFontSize = parseFloat(computedStyle.fontSize);
+      const displayLineHeight = parseFloat(computedStyle.lineHeight) || displayFontSize;
+      const displayFontWeight = computedStyle.fontWeight || state.fontWeight;
+      const displayFontFamily = computedStyle.fontFamily || '"JetBrains Mono", monospace';
+      const displayColor = computedStyle.color || '#f2f5ff';
+      const lineHeightRatio = displayLineHeight / displayFontSize;
+      const captureScale = 2;
+      const scaledFontSize = displayFontSize * captureScale;
+      
+      tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
+      tempCtx.font = `${displayFontWeight} ${scaledFontSize}px ${displayFontFamily}`;
+      tempCtx.textBaseline = "top";
+      tempCtx.fillStyle = displayColor;
+      
+      const charW = tempCtx.measureText("M").width;
+      const lineH = scaledFontSize * lineHeightRatio;
+      
+      for (let y = 0; y < lines.length; y++) {
+        const line = lines[y] || "";
+        for (let x = 0; x < line.length; x++) {
+          const char = line[x];
+          if (char && char !== ' ') {
+            tempCtx.fillText(char, x * charW, y * lineH);
+          }
+        }
+      }
+      
+      // recordCanvasに描画
       recordingCtx.fillStyle = "#0116ff";
       recordingCtx.fillRect(0, 0, recordCanvas.width, recordCanvas.height);
-      recordingCtx.fillStyle = "#ffffff";
-      recordingCtx.font = `${state.fontWeight} ${fsize}px "JetBrains Mono", monospace`;
-      recordingCtx.textBaseline = "top";
-      for (let y = 0; y < lines.length; y++) {
-        recordingCtx.fillText(lines[y] || "", pad, pad + y * lineH);
-      }
+      recordingCtx.drawImage(tempCanvas, offsetX, offsetY);
     }
   }
 
@@ -500,54 +530,101 @@
   function exportAsciiJpg() {
     clearTransientFeedback();
     const text = asciiEl.textContent || asciiEl.innerText || "";
-    const lines = text.replace(/\r\n/g, "\n").split("\n");
-    // 末尾の空行を除去
-    while (lines.length > 0 && lines[lines.length - 1].trim() === "") lines.pop();
-    const rows = lines.length;
-    const cols = Math.max(1, ...lines.map((l) => l.length));
-    if (rows <= 1 || cols <= 1 || !text.trim()) {
+    if (!text.trim()) {
       setStatus("JPG_EXPORT_FAILED");
       return;
     }
 
-    const out = document.createElement("canvas");
-    const octx = out.getContext("2d");
+    // 目標サイズ: 720x720（8の倍数）
+    const TARGET_SIZE = 720;
+    const pad = 40;
 
-    // フォントを先に設定してから文字幅を計測
-    const fontSize = 10;
-    const fontStr = `${state.fontWeight} ${fontSize}px "JetBrains Mono", Menlo, Consolas, monospace`;
-    octx.font = fontStr;
-    octx.textBaseline = "top";
+    // 新しいアプローチ: 画面表示されているASCII要素の実際のサイズを取得
+    const asciiRect = asciiEl.getBoundingClientRect();
+    const displayWidth = asciiRect.width;
+    const displayHeight = asciiRect.height;
 
-    // モノスペースフォントの正確な文字幅を取得
-    const charW = octx.measureText("M").width;
-    // 行高さ: CHAR_ASPECT(1.9) に合わせて文字幅 × 1.9
-    // これにより表示と同じアスペクト比になる
-    const lineH = charW * CHAR_ASPECT;
-    const pad = 16;
-
-    let w = Math.ceil(cols * charW) + pad * 2;
-    let h = Math.ceil(rows * lineH) + pad * 2;
-
-    // 4096px を上限にスケール
-    const MAX = 4096;
-    const scale = Math.min(1, MAX / Math.max(w, h));
-    w = Math.max(1, Math.floor(w * scale));
-    h = Math.max(1, Math.floor(h * scale));
-    out.width = w;
-    out.height = h;
-
-    // canvas サイズ変更後に再度フォントを設定（リセットされるため）
-    octx.setTransform(scale, 0, 0, scale, 0, 0);
-    octx.font = fontStr;
-    octx.textBaseline = "top";
-    octx.fillStyle = "#0116ff";
-    octx.fillRect(0, 0, w / scale, h / scale);
-    octx.fillStyle = "#f2f5ff";
-
-    for (let y = 0; y < rows; y++) {
-      octx.fillText(lines[y] || "", pad, pad + y * lineH);
+    // 一時的なキャンバスを作成して、ASCII要素を描画
+    const tempCanvas = document.createElement("canvas");
+    const tempCtx = tempCanvas.getContext("2d", { willReadFrequently: false });
+    
+    // 高解像度でキャプチャ（2倍）
+    const captureScale = 2;
+    tempCanvas.width = displayWidth * captureScale;
+    tempCanvas.height = displayHeight * captureScale;
+    
+    // ASCII要素から直接スタイルを取得
+    const computedStyle = window.getComputedStyle(asciiEl);
+    const displayFontSize = parseFloat(computedStyle.fontSize);
+    const displayLineHeight = parseFloat(computedStyle.lineHeight) || displayFontSize;
+    const displayFontWeight = computedStyle.fontWeight || state.fontWeight;
+    const displayFontFamily = computedStyle.fontFamily || '"JetBrains Mono", monospace';
+    const displayColor = computedStyle.color || '#f2f5ff';
+    
+    // line-heightの比率を計算
+    const lineHeightRatio = displayLineHeight / displayFontSize;
+    
+    // スケールされたフォントサイズ
+    const scaledFontSize = displayFontSize * captureScale;
+    tempCtx.font = `${displayFontWeight} ${scaledFontSize}px ${displayFontFamily}`;
+    tempCtx.textBaseline = "top";
+    tempCtx.fillStyle = displayColor;
+    
+    // 文字の幅と行の高さを測定
+    const charW = tempCtx.measureText("M").width;
+    const lineH = scaledFontSize * lineHeightRatio;
+    
+    // テキストを行に分割して描画
+    const lines = text.split("\n");
+    for (let y = 0; y < lines.length; y++) {
+      const line = lines[y] || "";
+      for (let x = 0; x < line.length; x++) {
+        const char = line[x];
+        if (char && char !== ' ') {
+          tempCtx.fillText(char, x * charW, y * lineH);
+        }
+      }
     }
+    
+    // 実際に描画されたコンテンツのサイズ
+    const contentW = tempCanvas.width;
+    const contentH = tempCanvas.height;
+    
+    // 正方形のサイズを決定（大きい方に合わせる）
+    let size = Math.max(contentW, contentH) + pad * 2 * captureScale;
+    
+    // 最小サイズを720x720に設定
+    if (size < TARGET_SIZE) {
+      size = TARGET_SIZE;
+    }
+    
+    // 8の倍数に丸める
+    size = Math.ceil(size / 8) * 8;
+    
+    // 最大4096pxに制限（8の倍数）
+    const MAX = 4096;
+    if (size > MAX) {
+      size = Math.floor(MAX / 8) * 8;
+    }
+    
+    // 最終的な出力キャンバス
+    const out = document.createElement("canvas");
+    const octx = out.getContext("2d", { 
+      alpha: false,
+      willReadFrequently: false 
+    });
+    
+    out.width = size;
+    out.height = size;
+    
+    // 背景を塗りつぶす
+    octx.fillStyle = "#0116ff";
+    octx.fillRect(0, 0, size, size);
+    
+    // コンテンツを中央に配置して描画
+    const offsetX = (size - contentW) / 2;
+    const offsetY = (size - contentH) / 2;
+    octx.drawImage(tempCanvas, offsetX, offsetY);
 
     out.toBlob(
       (blob) => {
@@ -560,7 +637,7 @@
         setStatus("JPG_EXPORT_COMPLETE");
       },
       "image/jpeg",
-      0.92
+      0.95
     );
   }
 
@@ -650,7 +727,7 @@
 
       const btn = qsa("#btnExportMov")[0];
       setButtonDisabled("btnExportMov", true);
-      setButtonText("btnExportMov", "3...");
+      setRecButtonText("3...", "3...");
       setRecButtonStyle("#ff3366", "#ff3366");
       updateRecordingHud("countdown", "REC_IN_3");
       updatePlaybackButtons(state.realtime ? "play" : "pause");
@@ -661,7 +738,7 @@
       recordingCountdownTimer = setInterval(() => {
         countdown--;
         if (countdown > 0) {
-          setButtonText("btnExportMov", `${countdown}...`);
+          setRecButtonText(`${countdown}...`, `${countdown}...`);
           updateRecordingHud("countdown", `REC_IN_${countdown}`);
         } else {
           clearInterval(recordingCountdownTimer);
@@ -673,39 +750,106 @@
   });
 
   function startMovieRecording(btn) {
-    setButtonText("btnExportMov", "REC_(5S)...");
+    setRecButtonText("REC_(5S)...", "(5s)...");
 
     const text = asciiEl.textContent || asciiEl.innerText || "";
-    const lines = text.replace(/\r\n/g, "\n").split("\n");
-    const cols = (lines[0] || "").length || 80;
-    const fsize = Math.round((14 * 80) / cols);
-    const pad = Math.max(20, fsize);
+    const lines = text.split("\n");
+    
+    // 目標サイズ: 720x720
+    const TARGET_SIZE = 720;
+    const pad = 40;
+
+    // 新しいアプローチ: 画面表示されているASCII要素の実際のサイズを取得
+    const asciiRect = asciiEl.getBoundingClientRect();
+    const displayWidth = asciiRect.width;
+    const displayHeight = asciiRect.height;
+
+    // 一時的なキャンバスを作成して、ASCII要素を描画
+    const tempCanvas = document.createElement("canvas");
+    const tempCtx = tempCanvas.getContext("2d", { willReadFrequently: false });
+    
+    // 高解像度でキャプチャ（2倍）
+    const captureScale = 2;
+    tempCanvas.width = displayWidth * captureScale;
+    tempCanvas.height = displayHeight * captureScale;
+    
+    // ASCII要素から直接スタイルを取得
+    const computedStyle = window.getComputedStyle(asciiEl);
+    const displayFontSize = parseFloat(computedStyle.fontSize);
+    const displayLineHeight = parseFloat(computedStyle.lineHeight) || displayFontSize;
+    const displayFontWeight = computedStyle.fontWeight || state.fontWeight;
+    const displayFontFamily = computedStyle.fontFamily || '"JetBrains Mono", monospace';
+    const displayColor = computedStyle.color || '#f2f5ff';
+    
+    // line-heightの比率を計算
+    const lineHeightRatio = displayLineHeight / displayFontSize;
+    
+    // スケールされたフォントサイズ
+    const scaledFontSize = displayFontSize * captureScale;
+    tempCtx.font = `${displayFontWeight} ${scaledFontSize}px ${displayFontFamily}`;
+    tempCtx.textBaseline = "top";
+    tempCtx.fillStyle = displayColor;
+    
+    // 文字の幅と行の高さを測定
+    const charW = tempCtx.measureText("M").width;
+    const lineH = scaledFontSize * lineHeightRatio;
+    
+    // テキストを行に分割して描画
+    for (let y = 0; y < lines.length; y++) {
+      const line = lines[y] || "";
+      for (let x = 0; x < line.length; x++) {
+        const char = line[x];
+        if (char && char !== ' ') {
+          tempCtx.fillText(char, x * charW, y * lineH);
+        }
+      }
+    }
+    
+    // 実際に描画されたコンテンツのサイズ
+    const contentW = tempCanvas.width;
+    const contentH = tempCanvas.height;
+    
+    // 正方形のサイズを決定（大きい方に合わせる）
+    let size = Math.max(contentW, contentH) + pad * 2 * captureScale;
+    
+    // 最小サイズを720x720に設定
+    if (size < TARGET_SIZE) {
+      size = TARGET_SIZE;
+    }
+    
+    // 8の倍数に丸める
+    size = Math.ceil(size / 8) * 8;
+    
+    // 最大4096pxに制限（8の倍数）
+    const MAX = 4096;
+    if (size > MAX) {
+      size = Math.floor(MAX / 8) * 8;
+    }
 
     recordCanvas = document.createElement("canvas");
-    recordingCtx = recordCanvas.getContext("2d", { willReadFrequently: true });
+    recordingCtx = recordCanvas.getContext("2d", { 
+      alpha: false,
+      willReadFrequently: true 
+    });
+    
+    recordCanvas.width = size;
+    recordCanvas.height = size;
 
-    // CHAR_ASPECT に合わせた行高さ（表示と同じアスペクト比）
-    recordingCtx.font = `${state.fontWeight} ${fsize}px "JetBrains Mono", monospace`;
-    const charW = recordingCtx.measureText("M").width;
-    const lineH = charW * CHAR_ASPECT;
+    // コンテンツを中央に配置するためのオフセット
+    const offsetX = (size - contentW) / 2;
+    const offsetY = (size - contentH) / 2;
 
-    let maxW = 0;
-    for (let i = 0; i < lines.length; i++) {
-        const w = recordingCtx.measureText(lines[i]).width;
-        if (w > maxW) maxW = w;
-    }
-    recordCanvas.width = Math.ceil(maxW) + pad * 2;
-    recordCanvas.height = Math.ceil(lines.length * lineH) + pad * 2;
+    // 録画パラメータをグローバルに保存
+    window._recordingParams = {
+      tempCanvas,
+      offsetX,
+      offsetY
+    };
 
-    // 初期フレームを即座に描画（一時停止中でも最初のフレームを確保）
+    // 初期フレームを描画
     recordingCtx.fillStyle = "#0116ff";
-    recordingCtx.fillRect(0, 0, recordCanvas.width, recordCanvas.height);
-    recordingCtx.fillStyle = "#ffffff";
-    recordingCtx.font = `${state.fontWeight} ${fsize}px "JetBrains Mono", monospace`;
-    recordingCtx.textBaseline = "top";
-    for (let i = 0; i < lines.length; i++) {
-      recordingCtx.fillText(lines[i] || "", pad, pad + i * lineH);
-    }
+    recordingCtx.fillRect(0, 0, size, size);
+    recordingCtx.drawImage(tempCanvas, offsetX, offsetY);
 
     const captureStream = recordCanvas.captureStream(30);
     let mimeString = "video/mp4;codecs=h264";
@@ -715,7 +859,7 @@
     }
     if (!MediaRecorder.isTypeSupported(mimeString)) {
       setButtonDisabled("btnExportMov", false);
-      setButtonText("btnExportMov", "REC.MOV_(5S)");
+      setRecButtonText("REC.MOV_(5S)", "(5s)");
       setRecButtonStyle("", "");
       updateRecordingHud("idle");
       updatePlaybackButtons(state.realtime ? "play" : "pause");
@@ -732,7 +876,7 @@
       console.error(event.error || event);
       isRecordingMov = false;
       setRecButtonStyle("", "");
-      setButtonText("btnExportMov", "REC.MOV_(5S)");
+      setRecButtonText("REC.MOV_(5S)", "(5s)");
       clearRecordingTimers();
       updateRecordingHud("idle");
       updatePlaybackButtons(state.realtime ? "play" : "pause");
@@ -754,11 +898,12 @@
       URL.revokeObjectURL(url);
       
       setButtonDisabled("btnExportMov", false);
-      setButtonText("btnExportMov", "REC.MOV_(5S)");
+      setRecButtonText("REC.MOV_(5S)", "(5s)");
       setRecButtonStyle("", "");
       isRecordingMov = false;
       recordCanvas = null;
       recordingCtx = null;
+      window._recordingParams = null;
       clearRecordingTimers();
       updateRecordingHud("idle");
       updatePlaybackButtons(state.realtime ? "play" : "pause");
@@ -772,25 +917,22 @@
     updatePlaybackButtons(state.realtime ? "play" : "pause");
     setStatus("REC_RECORDING");
 
-    // 一時停止中でも canvas を定期的に再描画して captureStream にフレームを供給する
-    // （captureStream は canvas の変化がないとフレームを出力しないため）
+    // 録画中は常にrenderAsciiFrameを呼び出してキャンバスを更新
+    // （captureStreamはcanvasの変化がないとフレームを出力しないため）
     let recordRafId = 0;
     const recordingLoop = () => {
       if (!isRecordingMov) return;
-      // 一時停止中（!state.realtime）でも renderAsciiFrame を呼ぶ
       renderAsciiFrame();
       recordRafId = requestAnimationFrame(recordingLoop);
     };
-    // リアルタイム再生中は既存ループが動いているので、一時停止中のみ補助ループを起動
-    if (!state.realtime) {
-      recordRafId = requestAnimationFrame(recordingLoop);
-    }
+    // 録画中は専用ループを起動（メインループとは独立）
+    recordRafId = requestAnimationFrame(recordingLoop);
 
     let secondsLeft = 5;
     recordingDurationTimer = setInterval(() => {
       secondsLeft--;
       if (secondsLeft > 0) {
-         setButtonText("btnExportMov", `REC_(${secondsLeft}S)...`);
+         setRecButtonText(`REC_(${secondsLeft}S)...`, `(${secondsLeft}s)...`);
          updateRecordingHud("recording", `REC_${secondsLeft}S`);
       } else {
          clearInterval(recordingDurationTimer);
@@ -893,20 +1035,8 @@
     });
   });
 
-  // ─── Mobile Controls Toggle ───────────────────────────────────
-  const btnToggleControls = document.getElementById("btnToggleControls");
-
-  if (btnToggleControls) {
-    btnToggleControls.addEventListener("click", () => {
-      // position: fixed 要素に祖先セレクタを効かせるため body にクラスを付ける
-      const isHidden = document.body.classList.toggle("controls-hidden");
-      btnToggleControls.setAttribute("aria-pressed", String(isHidden));
-      btnToggleControls.setAttribute(
-        "aria-label",
-        isHidden ? "コントロールパネルを表示" : "コントロールパネルを隠す"
-      );
-    });
-  }
+  // ─── Mobile Controls Toggle (削除済み) ───────────────────────────────────
+  // ハイド機能は削除されました
 
   window.addEventListener("beforeunload", () => {
     stopCamera();

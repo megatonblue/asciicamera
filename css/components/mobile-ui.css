@@ -10,10 +10,7 @@
   --mobile-panel-h: 220px;
 }
 
-/* ─── タブバー (デフォルト非表示) ─── */
-.mobile-tab-bar {
-  display: none;
-}
+/* ─── モバイルUI要素（デスクトップでは非表示） ─── */
 
 @media (max-width: 899px) {
 
@@ -25,21 +22,20 @@
 
   /* ─── タブバー ─── */
   .mobile-tab-bar {
-    display: flex;
-    position: fixed;
-    left: 0;
-    right: 0;
-    z-index: 26;
-    bottom: calc(var(--mobile-transport-h) + var(--mobile-panel-h) + env(safe-area-inset-bottom, 0px));
-    height: var(--mobile-tab-h);
-    background: rgba(9, 9, 11, 0.92);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    border-top: 1px solid rgba(67, 70, 87, 0.5);
-    padding: 8px 16px;
-    gap: 8px;
-    align-items: stretch;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex !important;
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 26 !important;
+    bottom: calc(72px + 220px) !important;
+    height: 56px !important;
+    background: rgba(9, 9, 11, 0.92) !important;
+    backdrop-filter: blur(6px) !important;
+    -webkit-backdrop-filter: blur(6px) !important;
+    border-top: 1px solid rgba(67, 70, 87, 0.5) !important;
+    padding: 8px 16px !important;
+    gap: 8px !important;
+    align-items: stretch !important;
   }
 
   .mobile-tab-bar__tab {
@@ -78,17 +74,16 @@
 
   /* ─── パネルシート ─── */
   .mobile-panels {
-    display: block;
-    position: fixed;
-    left: 0;
-    right: 0;
-    z-index: 25;
-    bottom: calc(var(--mobile-transport-h) + env(safe-area-inset-bottom, 0px));
-    height: var(--mobile-panel-h);
-    background: #0b0b0d;
-    border-top: 1px solid rgba(67, 70, 87, 0.5);
-    overflow: hidden;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: block !important;
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 25 !important;
+    bottom: 72px !important;
+    height: 220px !important;
+    background: #0b0b0d !important;
+    border-top: 1px solid rgba(67, 70, 87, 0.5) !important;
+    overflow: hidden !important;
   }
 
   .mobile-panel {
@@ -168,36 +163,35 @@
 
   /* ─── トランスポートバー ─── */
   .mobile-transport {
-    display: flex;
-    position: fixed;
-    left: 0;
-    right: 0;
-    z-index: 24;
-    bottom: 0;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-    height: calc(var(--mobile-transport-h) + env(safe-area-inset-bottom, 0px));
-    background: #0b0b0d;
-    border-top: 1px solid rgba(67, 70, 87, 0.5);
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding-left: 16px;
-    padding-right: 16px;
+    display: flex !important;
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 24 !important;
+    bottom: 0 !important;
+    height: 72px !important;
+    min-height: 72px !important;
+    background: #0b0b0d !important;
+    border-top: 1px solid rgba(67, 70, 87, 0.5) !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    padding: 0 16px !important;
   }
 
   .mobile-transport .transport-button {
-    height: 48px;
-    border: 1px solid #434657;
-    background: transparent;
-    color: #e5e2e1;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    cursor: pointer;
+    height: 48px !important;
+    border: 1px solid #434657 !important;
+    background: transparent !important;
+    color: #e5e2e1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    cursor: pointer !important;
     transition: border-color 0.16s ease, background 0.16s ease, color 0.16s ease,
-      transform 0.16s ease, opacity 0.16s ease;
-    flex-shrink: 0;
+      transform 0.16s ease, opacity 0.16s ease !important;
+    flex-shrink: 0 !important;
   }
 
   .mobile-transport .transport-button:not(.transport-button--primary):not(.transport-button--rec):not(.transport-button--toggle) {
@@ -242,28 +236,9 @@
     flex-shrink: 0;
   }
 
-  /* トグルボタン（右端） */
-  .mobile-transport .transport-button--toggle {
-    width: 36px;
-    min-width: 36px;
-    flex-shrink: 0;
-    border-color: rgba(67, 70, 87, 0.6);
-  }
-
-  .mobile-transport .transport-button--toggle svg {
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
   .mobile-transport .transport-button[aria-pressed="true"] {
     background: #0047ff;
     border-color: #ffffff;
-    color: #e5e2e1;
-  }
-
-  /* トグルボタンはアクティブ状態でも青くしない */
-  .mobile-transport .transport-button--toggle[aria-pressed="true"] {
-    background: transparent;
-    border-color: rgba(67, 70, 87, 0.6);
     color: #e5e2e1;
   }
 
@@ -289,12 +264,7 @@
     top: 0 !important;
     left: 0 !important;
     right: 0 !important;
-    bottom: calc(
-      var(--mobile-transport-h) +
-      var(--mobile-panel-h) +
-      var(--mobile-tab-h) +
-      env(safe-area-inset-bottom, 0px)
-    ) !important;
+    bottom: calc(72px + 220px + 56px) !important;
     height: auto !important;
     display: flex !important;
     flex-direction: column !important;
@@ -305,7 +275,6 @@
     overflow: hidden !important;
     overscroll-behavior: none;
     z-index: 0;
-    transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
   }
 
   /* ─── ASCII ビューポート ─── */
@@ -316,14 +285,7 @@
    * 一辺 = min(100vw - 4rem, 利用可能高さ)
    */
   .ascii-viewport {
-    --_avail-h: calc(
-      100dvh -
-      var(--mobile-transport-h) -
-      var(--mobile-panel-h) -
-      var(--mobile-tab-h) -
-      env(safe-area-inset-bottom, 0px) -
-      52px
-    );
+    --_avail-h: calc(100dvh - 72px - 220px - 56px - 52px);
     width: min(calc(100vw - 4rem), var(--_avail-h));
     height: min(calc(100vw - 4rem), var(--_avail-h));
     max-width: calc(100vw - 4rem);
@@ -332,8 +294,6 @@
     border-radius: 0 !important;
     margin: 0 !important;
     overflow: hidden !important;
-    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-                height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .ascii-viewport__inner {
@@ -377,41 +337,6 @@
 
   .app-shell__main {
     padding-bottom: 0 !important;
-  }
-
-  /* ─── コントロールハイド状態 (body.controls-hidden) ─── */
-  /* position: fixed 要素に効かせるため body にクラスを付ける */
-
-  /* タブバーとパネルを下にスライドアウト */
-  body.controls-hidden .mobile-tab-bar,
-  body.controls-hidden .mobile-panels {
-    transform: translateY(100%);
-    pointer-events: none;
-  }
-
-  /* 矢印を下向きに回転 */
-  body.controls-hidden .transport-button--toggle svg {
-    transform: rotate(180deg);
-  }
-
-  /* view-stage をトランスポートバーの直上まで広げる */
-  body.controls-hidden .view-stage {
-    bottom: calc(
-      var(--mobile-transport-h) +
-      env(safe-area-inset-bottom, 0px)
-    ) !important;
-  }
-
-  /* ascii-viewport をハイド時の利用可能サイズに合わせる */
-  body.controls-hidden .ascii-viewport {
-    --_avail-h: calc(
-      100dvh -
-      var(--mobile-transport-h) -
-      env(safe-area-inset-bottom, 0px) -
-      52px
-    );
-    width: min(calc(100vw - 4rem), var(--_avail-h));
-    height: min(calc(100vw - 4rem), var(--_avail-h));
   }
 }
 
