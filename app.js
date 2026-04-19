@@ -21,6 +21,8 @@
   const snapshotCtx = snapshotCanvas.getContext("2d", { willReadFrequently: true });
   const asciiEl = document.getElementById("ascii");
   const statusEl = document.getElementById("status");
+  const recordingHud = document.getElementById("recordingHud");
+  const recordingHudLabel = document.getElementById("recordingHudLabel");
 
   const colsInput = document.getElementById("cols");
   const colsValue = document.getElementById("colsValue");
@@ -46,7 +48,6 @@
   const navSettings = document.getElementById("navSettings");
   const navHistory = document.getElementById("navHistory");
   const navProfile = document.getElementById("navProfile");
-  const sidebarTabs = document.getElementById("sidebarTabs");
   const sidebarPanels = document.getElementById("sidebarPanels");
 
   let stream = null;
@@ -55,6 +56,10 @@
   let isRecordingMov = false;
   let recordingCtx = null;
   let recordCanvas = null;
+  let recordingPhase = "idle";
+  let recordingCountdownTimer = 0;
+  let recordingDurationTimer = 0;
+  let copySuccessActive = false;
 
   let running = false;
   let state = {
@@ -71,6 +76,10 @@
 
   function qsa(selector) {
     return Array.from(document.querySelectorAll(selector));
+  }
+
+  function getCharsetButtons() {
+    return qsa("[data-charset]");
   }
 
   function bindSyncedValue(id, onChange) {
@@ -111,6 +120,108 @@
     statusEl.textContent = text;
   }
 
+  function setCopyFeedback(active) {
+    copySuccessActive = active;
+    qsa("#btnExportTxt").forEach((el) => {
+      el.classList.toggle("export-button--copied", active);
+    });
+  }
+
+  function clearCopyFeedback() {
+    if (!copySuccessActive) return;
+    setCopyFeedback(false);
+  }
+
+  function clearTransientFeedback() {
+    clearCopyFeedback();
+  }
+
+  function updateRecordingHud(phase, label = "") {
+    recordingPhase = phase;
+    if (!recordingHud || !recordingHudLabel) return;
+    recordingHud.hidden = phase === "idle";
+    recordingHud.classList.toggle("recording-hud--countdown", phase === "countdown");
+    recordingHud.classList.toggle("recording-hud--recording", phase === "recording");
+    recordingHudLabel.textContent = label;
+  }
+
+  function clearRecordingTimers() {
+    if (recordingCountdownTimer) {
+      clearInterval(recordingCountdownTimer);
+      recordingCountdownTimer = 0;
+    }
+    if (recordingDurationTimer) {
+      clearInterval(recordingDurationTimer);
+      recordingDurationTimer = 0;
+    }
+  }
+
+  function setPressedState(id, isPressed) {
+    qsa(`#${id}`).forEach((el) => {
+      el.setAttribute("aria-pressed", String(isPressed));
+    });
+  }
+
+  function setButtonDisabled(id, disabled) {
+    qsa(`#${id}`).forEach((el) => {
+      el.disabled = disabled;
+    });
+  }
+
+  function setButtonText(id, text) {
+    qsa(`#${id}`).forEach((el) => {
+      const textTarget =
+        el.querySelector(".export-button__text") ||
+        el.querySelector("span:not(.export-button__group):not(.export-button__dot)") ||
+        el;
+      textTarget.textContent = text;
+    });
+  }
+
+  function updatePlaybackButtons(mode) {
+    setPressedState("btnStop", mode === "stop");
+    setPressedState("btnPlay", mode === "play");
+    setPressedState("btnPause", mode === "pause");
+    const transportLocked = isRecordingMov || recordingPhase === "countdown";
+    setButtonDisabled("btnStop", transportLocked);
+    setButtonDisabled("btnPlay", transportLocked);
+    setButtonDisabled("btnPause", transportLocked);
+  }
+
+  function updateExportButtons() {
+    const hasAscii = Boolean((asciiEl.textContent || asciiEl.innerText || "").trim());
+    const recordingLocked = isRecordingMov || recordingPhase === "countdown";
+    setButtonDisabled("btnExportTxt", !hasAscii || recordingLocked);
+    setButtonDisabled("btnExportJpg", !hasAscii || recordingLocked);
+    setButtonDisabled("btnExportMov", !running || recordingLocked || !hasAscii);
+  }
+
+  function updateCharsetButtons(value) {
+    const hasCustomCharset = Boolean((state.customCharset || "").trim());
+    getCharsetButtons().forEach((button) => {
+      const isActive = !hasCustomCharset && button.dataset.charset === value;
+      button.classList.toggle("charset-button--active", isActive);
+      button.setAttribute("aria-pressed", String(isActive));
+    });
+  }
+
+  function updateManualInputState() {
+    const isActive = Boolean((state.customCharset || "").trim());
+    qsa("#customCharset").forEach((el) => {
+      el.classList.toggle("control-input--active", isActive);
+    });
+  }
+
+  function updateSliderFill(id) {
+    qsa(`#${id}`).forEach((el) => {
+      const min = Number(el.min || 0);
+      const max = Number(el.max || 100);
+      const value = Number(el.value || min);
+      const ratio = max === min ? 0 : ((value - min) / (max - min)) * 100;
+      el.style.setProperty("--slider-fill", `${ratio}%`);
+    });
+  }
+
   function luminance(r, g, b) {
     return 0.2126 * r + 0.7152 * g + 0.0722 * b;
   }
@@ -137,14 +248,11 @@
 
   function updateControlLabels() {
     const scale = Number(state.scale);
-    const pct = Math.round(
-      ((scale - SCALE_MIN) / (SCALE_MAX - SCALE_MIN)) * 100
-    );
     qsa("#densityPct").forEach((el) => {
-      el.textContent = `${pct}%`;
+      el.textContent = (scale / 100).toFixed(2);
     });
     qsa("#contrastValue").forEach((el) => {
-      el.textContent = `[${Number(state.contrast).toFixed(2)}]`;
+      el.textContent = `${Number(state.contrast).toFixed(1)}X`;
     });
     if (fontWeightInput) {
       qsa("#fontWeightValue").forEach((el) => {
@@ -156,6 +264,12 @@
     const fontPx = Math.max(6, Math.min(16, (Number(state.scale) / 80) * 9));
     document.documentElement.style.setProperty('--cols', Number(state.scale));
     // asciiEl.style.fontSize = `${fontPx.toFixed(2)}px`;
+    updateSliderFill("cols");
+    updateSliderFill("fontWeight");
+    updateSliderFill("contrast");
+    updateCharsetButtons(state.charset);
+    updateManualInputState();
+    updateExportButtons();
   }
 
   function renderAsciiFrame() {
@@ -224,6 +338,7 @@
 
     if (useColor) asciiEl.innerHTML = html;
     else asciiEl.textContent = out;
+    updateExportButtons();
 
     if (isRecordingMov && recordingCtx && recordCanvas) {
       const fsize = Math.round((14 * 80) / cols);
@@ -282,12 +397,12 @@
       running = true;
       state.realtime = true;
       
-      btnPlay.classList.add("btn-playback--active");
-      btnPause.classList.remove("btn-playback--active");
       fabCamera.classList.add("fab-camera--on");
-      setStatus("LIVE // ASCII stream");
+      updatePlaybackButtons("play");
+      setStatus("LIVE_//_ASCII_STREAM");
       cancelAnimationFrame(rafId);
       rafId = requestAnimationFrame(loop);
+      updateExportButtons();
     } catch (e) {
       console.error(e);
       setStatus(
@@ -308,39 +423,80 @@
     asciiEl.textContent = "";
     asciiEl.innerHTML = "";
     
-    btnPlay.classList.remove("btn-playback--active");
-    btnPause.classList.remove("btn-playback--active");
     fabCamera.classList.remove("fab-camera--on");
+    updatePlaybackButtons("stop");
     setStatus("STANDBY");
+    updateExportButtons();
   }
 
   function toggleCamera() {
+    if (isRecordingMov || recordingPhase === "countdown") {
+      setStatus("REC_IN_PROGRESS");
+      return;
+    }
+    clearTransientFeedback();
     if (running) stopCamera();
     else startCamera();
   }
 
   function exportAsciiTxt() {
+    clearTransientFeedback();
     const text = asciiEl.textContent || asciiEl.innerText || "";
     if (!text.trim()) {
-      setStatus("EXPORT: データがありません");
+      setStatus("COPY_FAILED");
       return;
     }
-    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `digital-alchemist-${Date.now()}.txt`;
-    a.click();
-    URL.revokeObjectURL(a.href);
-    setStatus("EXPORT complete");
+    const fallbackCopy = () => {
+      const temp = document.createElement("textarea");
+      temp.value = text;
+      temp.setAttribute("readonly", "");
+      temp.style.position = "fixed";
+      temp.style.opacity = "0";
+      document.body.appendChild(temp);
+      temp.select();
+      document.execCommand("copy");
+      document.body.removeChild(temp);
+    };
+
+    const onSuccess = () => {
+      setCopyFeedback(true);
+      setStatus("COPY_COMPLETE");
+    };
+    const onFailure = () => setStatus("COPY_FAILED");
+
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard
+        .writeText(text)
+        .then(onSuccess)
+        .catch(() => {
+          try {
+            fallbackCopy();
+            onSuccess();
+          } catch (error) {
+            console.error(error);
+            onFailure();
+          }
+        });
+      return;
+    }
+
+    try {
+      fallbackCopy();
+      onSuccess();
+    } catch (error) {
+      console.error(error);
+      onFailure();
+    }
   }
 
   function exportAsciiJpg() {
+    clearTransientFeedback();
     const text = asciiEl.textContent || asciiEl.innerText || "";
     const lines = text.replace(/\r\n/g, "\n").split("\n");
     const rows = lines.length;
     const cols = Math.max(1, ...lines.map((l) => l.length));
     if (rows <= 1 || cols <= 1 || !text.trim()) {
-      setStatus("EXPORT: データがありません");
+      setStatus("JPG_EXPORT_FAILED");
       return;
     }
 
@@ -382,7 +538,7 @@
         a.download = `digital-alchemist-${Date.now()}.jpg`;
         a.click();
         URL.revokeObjectURL(a.href);
-        setStatus("EXPORT complete");
+        setStatus("JPG_EXPORT_COMPLETE");
       },
       "image/jpeg",
       0.92
@@ -406,22 +562,25 @@
     drawerContent.replaceChildren(clone);
   }
   btnStop.addEventListener("click", () => {
+    clearTransientFeedback();
     if (running) stopCamera();
   });
   
   btnPlay.addEventListener("click", () => {
+    clearTransientFeedback();
     if (!running) {
       startCamera();
     } else {
       state.realtime = true;
-      btnPlay.classList.add("btn-playback--active");
-      btnPause.classList.remove("btn-playback--active");
+      updatePlaybackButtons("play");
       cancelAnimationFrame(rafId);
       rafId = requestAnimationFrame(loop);
+      updateExportButtons();
     }
   });
 
   btnPause.addEventListener("click", () => {
+    clearTransientFeedback();
     if (running) {
       state.realtime = false;
       if (video.readyState >= 2) {
@@ -429,12 +588,15 @@
         snapshotCanvas.height = video.videoHeight;
         snapshotCtx.drawImage(video, 0, 0);
       }
-      btnPause.classList.add("btn-playback--active");
-      btnPlay.classList.remove("btn-playback--active");
+      updatePlaybackButtons("pause");
+      updateExportButtons();
     }
   });
 
-  fabCamera.addEventListener("click", toggleCamera);
+  fabCamera.addEventListener("click", () => {
+    clearTransientFeedback();
+    toggleCamera();
+  });
   qsa("#btnExportTxt").forEach((b) =>
     b.addEventListener("click", () => {
       if (!running) {
@@ -458,29 +620,36 @@
 
   qsa("#btnExportMov").forEach((b) => {
     b.addEventListener("click", async () => {
-      if (isRecordingMov) return;
+      if (isRecordingMov || recordingPhase === "countdown") return;
       if (!running) {
         alert("カメラ起動中でないと実行できません");
         return;
       }
+      clearTransientFeedback();
 
       const btn = qsa("#btnExportMov")[0];
-      if (btn) {
-        btn.disabled = true;
-        btn.textContent = "3...";
-        btn.style.color = "#ff3366";
-        btn.style.borderColor = "#ff3366";
-      }
+      setButtonDisabled("btnExportMov", true);
+      setButtonText("btnExportMov", "3...");
+      qsa("#btnExportMov").forEach((el) => {
+        el.style.color = "#ff3366";
+        el.style.borderColor = "#ff3366";
+      });
+      updateRecordingHud("countdown", "REC_IN_3");
+      updatePlaybackButtons(state.realtime ? "play" : "pause");
+      setStatus("REC_PREPARING");
 
       if (drawerBackdrop.classList.contains("drawer-backdrop--open")) closeDrawer();
 
       let countdown = 3;
-      const countTimer = setInterval(() => {
+      clearRecordingTimers();
+      recordingCountdownTimer = setInterval(() => {
         countdown--;
         if (countdown > 0) {
-          if (btn) btn.textContent = `${countdown}...`;
+          setButtonText("btnExportMov", `${countdown}...`);
+          updateRecordingHud("countdown", `REC_IN_${countdown}`);
         } else {
-          clearInterval(countTimer);
+          clearInterval(recordingCountdownTimer);
+          recordingCountdownTimer = 0;
           startMovieRecording(btn);
         }
       }, 1000);
@@ -488,7 +657,7 @@
   });
 
   function startMovieRecording(btn) {
-    if (btn) btn.textContent = "REC (5S)...";
+    setButtonText("btnExportMov", "REC_(5S)...");
 
     const text = asciiEl.textContent || asciiEl.innerText || "";
     const lines = text.replace(/\r\n/g, "\n").split("\n");
@@ -513,16 +682,43 @@
     recordingCtx.fillRect(0, 0, recordCanvas.width, recordCanvas.height);
 
     const stream = recordCanvas.captureStream(30);
-    let mimeString = 'video/webm';
-    let ext = 'webm';
+    let mimeString = "video/mp4;codecs=h264";
+    let ext = "mp4";
     if (!MediaRecorder.isTypeSupported(mimeString)) {
-        mimeString = 'video/mp4';
-        ext = 'mp4';
+      mimeString = "video/mp4";
+    }
+    if (!MediaRecorder.isTypeSupported(mimeString)) {
+      setButtonDisabled("btnExportMov", false);
+      setButtonText("btnExportMov", "REC.MOV_(5S)");
+      qsa("#btnExportMov").forEach((el) => {
+        el.style.color = "";
+        el.style.borderColor = "";
+      });
+      updateRecordingHud("idle");
+      updatePlaybackButtons(state.realtime ? "play" : "pause");
+      setStatus("MP4_RECORDING_NOT_SUPPORTED");
+      updateExportButtons();
+      return;
     }
     
     const options = MediaRecorder.isTypeSupported(mimeString) ? { mimeType: mimeString } : undefined;
     const movieRecorder = new MediaRecorder(stream, options);
     const recordChunks = [];
+
+    movieRecorder.onerror = (event) => {
+      console.error(event.error || event);
+      isRecordingMov = false;
+      qsa("#btnExportMov").forEach((el) => {
+        el.style.color = "";
+        el.style.borderColor = "";
+      });
+      setButtonText("btnExportMov", "REC.MOV_(5S)");
+      clearRecordingTimers();
+      updateRecordingHud("idle");
+      updatePlaybackButtons(state.realtime ? "play" : "pause");
+      updateExportButtons();
+      setStatus("REC_FAILED");
+    };
 
     movieRecorder.ondataavailable = e => {
       if (e.data.size > 0) recordChunks.push(e.data);
@@ -537,27 +733,37 @@
       a.click();
       URL.revokeObjectURL(url);
       
-      if (btn) {
-        btn.disabled = false;
-        btn.textContent = "MOV EXPORT (5S)";
-        btn.style.color = "";
-        btn.style.borderColor = "";
-      }
+      setButtonDisabled("btnExportMov", false);
+      setButtonText("btnExportMov", "REC.MOV_(5S)");
+      qsa("#btnExportMov").forEach((el) => {
+        el.style.color = "";
+        el.style.borderColor = "";
+      });
       isRecordingMov = false;
       recordCanvas = null;
       recordingCtx = null;
+      clearRecordingTimers();
+      updateRecordingHud("idle");
+      updatePlaybackButtons(state.realtime ? "play" : "pause");
+      setStatus("REC_COMPLETE");
+      updateExportButtons();
     };
 
     movieRecorder.start();
     isRecordingMov = true;
+    updateRecordingHud("recording", "REC_5S");
+    updatePlaybackButtons(state.realtime ? "play" : "pause");
+    setStatus("REC_RECORDING");
 
     let secondsLeft = 5;
-    const timer = setInterval(() => {
+    recordingDurationTimer = setInterval(() => {
       secondsLeft--;
       if (secondsLeft > 0) {
-         if (btn) btn.textContent = `REC (${secondsLeft}S)...`;
+         setButtonText("btnExportMov", `REC_(${secondsLeft}S)...`);
+         updateRecordingHud("recording", `REC_${secondsLeft}S`);
       } else {
-         clearInterval(timer);
+         clearInterval(recordingDurationTimer);
+         recordingDurationTimer = 0;
          if (movieRecorder.state !== "inactive") {
            movieRecorder.stop();
          }
@@ -574,60 +780,90 @@
   });
 
   navCamera.addEventListener("click", () => {
+    clearTransientFeedback();
     toggleCamera();
   });
 
   navSettings.addEventListener("click", () => {
+    clearTransientFeedback();
     openDrawer();
   });
 
   navHistory.addEventListener("click", () => {
-    setStatus("LOG // 履歴は準備中です");
+    clearTransientFeedback();
+    setStatus("LOG_//_準備中");
   });
 
   navProfile.addEventListener("click", () => {
-    setStatus("USER // プロフィールは準備中です");
+    clearTransientFeedback();
+    setStatus("USER_//_準備中");
   });
 
   bindSyncedValue("cols", (v) => {
+    clearTransientFeedback();
     state.scale = Number(v);
     updateControlLabels();
     scheduleFrame();
   });
   if (fontWeightInput) {
     bindSyncedValue("fontWeight", (v) => {
+      clearTransientFeedback();
       state.fontWeight = Number(v);
       updateControlLabels();
     });
   }
   bindSyncedValue("contrast", (v) => {
+    clearTransientFeedback();
     state.contrast = Number(v);
     updateControlLabels();
     scheduleFrame();
   });
   bindSyncedValue("charset", (v) => {
+    clearTransientFeedback();
     state.charset = v;
+    updateCharsetButtons(v);
     scheduleFrame();
   });
   bindSyncedValue("customCharset", (v) => {
+    clearTransientFeedback();
     state.customCharset = v;
+    updateCharsetButtons(state.charset);
+    updateManualInputState();
     scheduleFrame();
   });
   bindSyncedChecked("mirror", (v) => {
+    clearTransientFeedback();
     state.mirror = v;
     scheduleFrame();
   });
   bindSyncedChecked("invert", (v) => {
+    clearTransientFeedback();
     state.invert = v;
     scheduleFrame();
   });
   bindSyncedChecked("color", (v) => {
+    clearTransientFeedback();
     state.color = v;
     scheduleFrame();
   });
 
+  getCharsetButtons().forEach((button) => {
+    button.addEventListener("click", () => {
+      clearTransientFeedback();
+      const value = button.dataset.charset;
+      qsa("#charset").forEach((el) => {
+        el.value = value;
+      });
+      state.charset = value;
+      updateCharsetButtons(value);
+      scheduleFrame();
+    });
+  });
+
 
   updateControlLabels();
+  updatePlaybackButtons("stop");
+  updateExportButtons();
 
   window.addEventListener("beforeunload", () => {
     stopCamera();
