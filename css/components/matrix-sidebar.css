@@ -49,54 +49,56 @@
   padding-bottom: 12px;
 }
 
-.transport-button {
-  min-width: 0;
-  height: 48px;
-  border: 1px solid #434657;
-  background: transparent;
-  color: #e5e2e1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  cursor: pointer;
-  transition: border-color 0.16s ease, background 0.16s ease, color 0.16s ease,
-    transform 0.16s ease, opacity 0.16s ease;
-}
+@media (min-width: 900px) {
+  .transport-button {
+    min-width: 0;
+    height: 48px;
+    border: 1px solid #434657;
+    background: transparent;
+    color: #e5e2e1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: border-color 0.16s ease, background 0.16s ease, color 0.16s ease,
+      transform 0.16s ease, opacity 0.16s ease;
+  }
 
-.transport-button span {
-  font-family: "Space Grotesk", var(--font-ui);
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 16px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
+  .transport-button span {
+    font-family: "Space Grotesk", var(--font-ui);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 16px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
 
-.transport-button:hover,
-.transport-button:focus-visible {
-  outline: none;
-  border-color: #8e8fa3;
-  color: #fff;
-}
+  .transport-button:hover,
+  .transport-button:focus-visible {
+    outline: none;
+    border-color: #8e8fa3;
+    color: #fff;
+  }
 
-.transport-button:active {
-  transform: translateY(1px);
-}
+  .transport-button:active {
+    transform: translateY(1px);
+  }
 
-.transport-button[aria-pressed="true"] {
-  background: #0047ff;
-  border-color: #ffffff;
-  color: #e5e2e1;
-}
+  .transport-button[aria-pressed="true"] {
+    background: #0047ff;
+    border-color: #ffffff;
+    color: #e5e2e1;
+  }
 
-.transport-button:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
+  .transport-button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
 
-.transport-button--primary {
-  justify-content: center;
+  .transport-button--primary {
+    justify-content: center;
+  }
 }
 
 .sidebar-stack {
